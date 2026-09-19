@@ -1,0 +1,44 @@
+.campus-map-wrapper {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.campus-map {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+}
+
+.leaflet-container {
+    width: 100%;
+    height: 100%;
+}
+
+.reset-map-button {
+    position: absolute;
+    left: 12px;
+    bottom: 24px;
+    z-index: 1500;
+    padding: 11px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.96);
+    color: #111827;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: background-color 0.15s ease;
+}
+
+.reset-map-button:hover {
+    background: #f3f4f6;
+}
