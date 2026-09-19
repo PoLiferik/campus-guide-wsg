@@ -1,14 +1,21 @@
-import {
-    useEffect,
-    useState,
-} from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+
 import { buildings } from '../../mocks/buildings';
 import { entranceApi } from '../../services/entranceApi';
+import { authApi } from '../../services/authApi';
+
 import type { Entrance } from '../../types/Entrance';
+import type { User } from '../../types/User';
+
 import './LecturerPage.css';
 
 function LecturerPage() {
+    const navigate = useNavigate();
+
+    const [currentUser, setCurrentUser] =
+        useState<User | null>(null);
+
     const [allEntrances, setAllEntrances] =
         useState<Entrance[]>([]);
 
@@ -37,396 +44,559 @@ function LecturerPage() {
         useState<string | null>(null);
 
     useEffect(() => {
-        const loadEntrances = async () => {
+        const load = async () => {
             try {
-                const data =
+                const user =
+                    await authApi.getCurrentUser();
+
+                if (!user) {
+                    navigate('/login');
+                    return;
+                }
+
+                setCurrentUser(user);
+
+                const entrances =
                     await entranceApi.getAll();
 
-                setAllEntrances(data);
+                setAllEntrances(entrances);
+
+                const availableBuildings =
+                    user.role === 'admin'
+                        ? buildings
+                        : buildings.filter(
+                            (building) =>
+                                user.assignedBuildingIds.includes(
+                                    building.id
+                                )
+                        );
+
+                if (availableBuildings.length > 0) {
+                    setSelectedBuildingId(
+                        availableBuildings[0].id
+                    );
+                }
+            } catch (error) {
+                console.error(error);
             } finally {
                 setLoading(false);
             }
         };
 
-        loadEntrances();
-    }, []);
+        load();
+    }, [navigate]);
+
+    const availableBuildings =
+        useMemo(() => {
+            if (!currentUser) {
+                return [];
+            }
+
+            if (currentUser.role === 'admin') {
+                return buildings;
+            }
+
+            return buildings.filter(
+                (building) =>
+                    currentUser.assignedBuildingIds.includes(
+                        building.id
+                    )
+            );
+        }, [currentUser]);
 
     const buildingEntrances =
-        selectedBuildingId === null
-            ? []
-            : allEntrances.filter(
+        useMemo(() => {
+            if (selectedBuildingId === null) {
+                return [];
+            }
+
+            return allEntrances.filter(
                 (entrance) =>
                     entrance.buildingId ===
                     selectedBuildingId
             );
+        }, [
+            allEntrances,
+            selectedBuildingId,
+        ]);
 
     const selectedEntrance =
-        allEntrances.find(
-            (entrance) =>
-                entrance.id ===
-                selectedEntranceId
-        ) ?? null;
-
-    const handleBuildingChange = (
-        buildingId: number
-    ) => {
-        setSelectedBuildingId(buildingId);
-        setSelectedEntranceId(null);
-        setMessage(null);
-    };
-
-    const handleEntranceSelect = (
-        entrance: Entrance
-    ) => {
-        setSelectedEntranceId(
-            entrance.id
+        useMemo(
+            () =>
+                buildingEntrances.find(
+                    (entrance) =>
+                        entrance.id ===
+                        selectedEntranceId
+                ) ?? null,
+            [
+                buildingEntrances,
+                selectedEntranceId,
+            ]
         );
 
-        setIsOpen(
-            entrance.isOpen ?? true
-        );
+    useEffect(() => {
+        if (buildingEntrances.length === 0) {
+            setSelectedEntranceId(null);
+            return;
+        }
 
-        setOpenFrom(
-            entrance.openFrom ?? '07:00'
-        );
+        const currentStillExists =
+            buildingEntrances.some(
+                (entrance) =>
+                    entrance.id ===
+                    selectedEntranceId
+            );
 
-        setOpenUntil(
-            entrance.openUntil ?? '21:00'
-        );
+        if (!currentStillExists) {
+            setSelectedEntranceId(
+                buildingEntrances[0].id
+            );
+        }
+    }, [
+        buildingEntrances,
+        selectedEntranceId,
+    ]);
 
-        setMessage(null);
-    };
-
-    const handleSave = async () => {
+    useEffect(() => {
         if (!selectedEntrance) {
             return;
         }
 
-        if (
-            isOpen &&
-            (!openFrom || !openUntil)
-        ) {
-            setMessage(
-                'Uzupełnij godziny otwarcia.'
-            );
+        setIsOpen(
+            selectedEntrance.isOpen ?? true
+        );
 
-            return;
-        }
+        setOpenFrom(
+            selectedEntrance.openFrom ??
+            '07:00'
+        );
 
-        try {
-            setSaving(true);
-            setMessage(null);
+        setOpenUntil(
+            selectedEntrance.openUntil ??
+            '21:00'
+        );
 
-            const updated =
-                await entranceApi.updateStatus(
-                    selectedEntrance.id,
-                    {
-                        isOpen,
-                        openFrom:
-                            isOpen
-                                ? openFrom
-                                : null,
-                        openUntil:
-                            isOpen
-                                ? openUntil
-                                : null,
-                    }
+        setMessage(null);
+    }, [selectedEntrance]);
+
+    const handleSave =
+        async () => {
+            if (!selectedEntrance) {
+                return;
+            }
+
+            try {
+                setSaving(true);
+                setMessage(null);
+
+                const updated =
+                    await entranceApi.updateStatus(
+                        selectedEntrance.id,
+                        {
+                            isOpen,
+                            openFrom:
+                                openFrom || null,
+                            openUntil:
+                                openUntil || null,
+                        }
+                    );
+
+                setAllEntrances(
+                    (current) =>
+                        current.map(
+                            (entrance) =>
+                                entrance.id ===
+                                updated.id
+                                    ? updated
+                                    : entrance
+                        )
                 );
 
-            setAllEntrances(
-                (current) =>
-                    current.map(
-                        (entrance) =>
-                            entrance.id ===
-                            updated.id
-                                ? updated
-                                : entrance
-                    )
-            );
+                setMessage(
+                    'Zmiany zostały zapisane.'
+                );
+            } catch (error) {
+                console.error(error);
 
-            setMessage(
-                'Zmiany zostały zapisane.'
-            );
-        } catch (error) {
-            console.error(error);
+                setMessage(
+                    'Nie udało się zapisać zmian.'
+                );
+            } finally {
+                setSaving(false);
+            }
+        };
 
-            setMessage(
-                'Nie udało się zapisać zmian.'
-            );
-        } finally {
-            setSaving(false);
-        }
-    };
+    const handleLogout =
+        async () => {
+            await authApi.logout();
+
+            navigate('/login');
+        };
+
+    if (loading) {
+        return (
+            <main className="lecturer-page">
+                <div className="lecturer-card">
+                    Ładowanie...
+                </div>
+            </main>
+        );
+    }
+
+    if (!currentUser) {
+        return null;
+    }
 
     return (
         <main className="lecturer-page">
-            <header className="lecturer-header">
+            <aside className="lecturer-sidebar">
                 <div>
-                    <span className="lecturer-header__small">
+                    <span className="lecturer-sidebar__small">
                         Campus Guide WSG
                     </span>
 
                     <h1>
                         Panel wykładowcy
                     </h1>
-
-                    <p>
-                        Zarządzanie statusem wejść do budynków
-                    </p>
                 </div>
 
-                <Link
-                    to="/"
-                    className="lecturer-back"
-                >
-                    ← Mapa kampusu
-                </Link>
-            </header>
+                <div className="lecturer-user">
+                    <span>
+                        Zalogowany jako
+                    </span>
 
-            <section className="lecturer-layout">
-                <aside className="lecturer-sidebar">
-                    <h2>
-                        Budynek
-                    </h2>
+                    <strong>
+                        {currentUser.name}
+                    </strong>
 
-                    <select
-                        className="lecturer-select"
-                        value={
-                            selectedBuildingId ?? ''
-                        }
-                        onChange={(event) =>
-                            handleBuildingChange(
-                                Number(
-                                    event.target.value
-                                )
-                            )
-                        }
-                    >
-                        <option value="">
-                            Wybierz budynek
-                        </option>
+                    <small>
+                        {currentUser.role === 'admin'
+                            ? 'Administrator'
+                            : 'Wykładowca'}
+                    </small>
+                </div>
 
-                        {buildings.map(
+                <div className="lecturer-access">
+                    <span>
+                        Dostęp do budynków
+                    </span>
+
+                    <div className="lecturer-access__list">
+                        {availableBuildings.map(
                             (building) => (
-                                <option
-                                    key={building.id}
-                                    value={building.id}
-                                >
-                                    Budynek {building.code}
-                                </option>
-                            )
-                        )}
-                    </select>
-
-                    {loading && (
-                        <p className="lecturer-info">
-                            Ładowanie...
-                        </p>
-                    )}
-
-                    {!loading &&
-                        selectedBuildingId !== null &&
-                        buildingEntrances.length === 0 && (
-                            <p className="lecturer-info">
-                                Brak danych o wejściach.
-                            </p>
-                        )}
-
-                    <div className="lecturer-entrance-list">
-                        {buildingEntrances.map(
-                            (entrance) => (
-                                <button
-                                    key={entrance.id}
-                                    type="button"
-                                    className={
-                                        selectedEntranceId ===
-                                        entrance.id
-                                            ? 'lecturer-entrance lecturer-entrance--selected'
-                                            : 'lecturer-entrance'
+                                <span
+                                    key={
+                                        building.id
                                     }
-                                    onClick={() =>
-                                        handleEntranceSelect(
-                                            entrance
-                                        )
-                                    }
+                                    className="lecturer-building-badge"
                                 >
-                                    <span
-                                        className={
-                                            entrance.isOpen === true
-                                                ? 'lecturer-dot lecturer-dot--open'
-                                                : entrance.isOpen === false
-                                                    ? 'lecturer-dot lecturer-dot--closed'
-                                                    : 'lecturer-dot lecturer-dot--unknown'
-                                        }
-                                    />
-
-                                    <div>
-                                        <strong>
-                                            {entrance.code}
-                                        </strong>
-
-                                        <span>
-                                            {
-                                                entrance.description ??
-                                                'Brak opisu'
-                                            }
-                                        </span>
-                                    </div>
-                                </button>
+                                    {building.code}
+                                </span>
                             )
                         )}
                     </div>
-                </aside>
+                </div>
 
-                <section className="lecturer-editor">
-                    {!selectedEntrance && (
-                        <div className="lecturer-empty">
-                            <h2>
-                                Wybierz wejście
-                            </h2>
+                <div className="lecturer-sidebar__bottom">
+                    <Link
+                        to="/"
+                        className="lecturer-link"
+                    >
+                        ← Mapa kampusu
+                    </Link>
 
-                            <p>
-                                Najpierw wybierz budynek, a następnie wejście.
-                            </p>
-                        </div>
-                    )}
+                    {currentUser.role ===
+                        'admin' && (
+                            <Link
+                                to="/admin"
+                                className="lecturer-link"
+                            >
+                                Panel administratora
+                            </Link>
+                        )}
 
-                    {selectedEntrance && (
-                        <>
-                            <div className="lecturer-editor__header">
-                                <div>
-                                    <span>
-                                        Edycja wejścia
-                                    </span>
+                    <button
+                        type="button"
+                        className="lecturer-logout"
+                        onClick={
+                            handleLogout
+                        }
+                    >
+                        Wyloguj się
+                    </button>
+                </div>
+            </aside>
 
-                                    <h2>
-                                        {
-                                            selectedEntrance.code
-                                        }
-                                    </h2>
+            <section className="lecturer-content">
+                <header className="lecturer-header">
+                    <div>
+                        <span>
+                            Zarządzanie wejściami
+                        </span>
 
-                                    <p>
-                                        {
-                                            selectedEntrance.description
-                                        }
-                                    </p>
-                                </div>
-                            </div>
+                        <h2>
+                            Status wejść
+                        </h2>
 
-                            <div className="lecturer-field">
-                                <label>
-                                    Status wejścia
-                                </label>
+                        <p>
+                            Możesz edytować tylko
+                            wejścia przypisanych
+                            budynków.
+                        </p>
+                    </div>
+                </header>
 
-                                <div className="lecturer-status-buttons">
-                                    <button
-                                        type="button"
-                                        className={
-                                            isOpen
-                                                ? 'status-button status-button--open status-button--active'
-                                                : 'status-button status-button--open'
-                                        }
-                                        onClick={() =>
-                                            setIsOpen(true)
-                                        }
-                                    >
-                                        ● Otwarte
-                                    </button>
+                {availableBuildings.length ===
+                0 ? (
+                    <div className="lecturer-card">
+                        <h3>
+                            Brak przypisanych budynków
+                        </h3>
 
-                                    <button
-                                        type="button"
-                                        className={
-                                            !isOpen
-                                                ? 'status-button status-button--closed status-button--active'
-                                                : 'status-button status-button--closed'
-                                        }
-                                        onClick={() =>
-                                            setIsOpen(false)
-                                        }
-                                    >
-                                        ● Zamknięte
-                                    </button>
-                                </div>
-                            </div>
+                        <p>
+                            Administrator nie
+                            przypisał jeszcze
+                            żadnego budynku do
+                            Twojego konta.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="lecturer-grid">
+                        <div className="lecturer-card">
+                            <label className="lecturer-field">
+                                Budynek
 
-                            <div className="lecturer-time-row">
-                                <div className="lecturer-field">
-                                    <label htmlFor="openFrom">
-                                        Otwarte od
-                                    </label>
-
-                                    <input
-                                        id="openFrom"
-                                        type="time"
-                                        value={openFrom}
-                                        disabled={!isOpen}
-                                        onChange={(event) =>
-                                            setOpenFrom(
-                                                event.target.value
+                                <select
+                                    value={
+                                        selectedBuildingId ??
+                                        ''
+                                    }
+                                    onChange={(
+                                        event
+                                    ) => {
+                                        setSelectedBuildingId(
+                                            Number(
+                                                event
+                                                    .target
+                                                    .value
                                             )
-                                        }
-                                    />
-                                </div>
+                                        );
 
-                                <div className="lecturer-field">
-                                    <label htmlFor="openUntil">
-                                        Otwarte do
-                                    </label>
+                                        setSelectedEntranceId(
+                                            null
+                                        );
+                                    }}
+                                >
+                                    {availableBuildings.map(
+                                        (
+                                            building
+                                        ) => (
+                                            <option
+                                                key={
+                                                    building.id
+                                                }
+                                                value={
+                                                    building.id
+                                                }
+                                            >
+                                                Budynek{' '}
+                                                {
+                                                    building.code
+                                                }
+                                            </option>
+                                        )
+                                    )}
+                                </select>
+                            </label>
 
-                                    <input
-                                        id="openUntil"
-                                        type="time"
-                                        value={openUntil}
-                                        disabled={!isOpen}
-                                        onChange={(event) =>
-                                            setOpenUntil(
-                                                event.target.value
-                                            )
-                                        }
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="lecturer-current">
+                            <div className="lecturer-building-info">
                                 <span>
-                                    Aktualny podgląd
+                                    Twój dostęp
                                 </span>
 
                                 <strong>
-                                    {isOpen
-                                        ? `Otwarte ${openFrom}–${openUntil}`
-                                        : 'Zamknięte'}
-                                </strong>
-                            </div>
-
-                            {message && (
-                                <div className="lecturer-message">
-                                    {message}
-                                </div>
-                            )}
-                            <button
-                                type="button"
-                                className="lecturer-save"
-                                disabled={saving}
-                                onClick={handleSave}
-                            >
-                                {saving
-                                    ? 'Zapisywanie...'
-                                    : 'Zapisz zmiany'}
-                            </button>
-                            {selectedEntrance.updatedBy && (
-                                <p className="lecturer-updated">
-                                    Ostatnia zmiana:{' '}
                                     {
-                                        selectedEntrance.updatedBy
+                                        availableBuildings.find(
+                                            (
+                                                building
+                                            ) =>
+                                                building.id ===
+                                                selectedBuildingId
+                                        )
+                                            ?.code
                                     }
-                                </p>
+                                </strong>
+
+                                <span className="lecturer-access-ok">
+                                    ● Dostęp przyznany
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="lecturer-card">
+                            <label className="lecturer-field">
+                                Wejście
+
+                                <select
+                                    value={
+                                        selectedEntranceId ??
+                                        ''
+                                    }
+                                    disabled={
+                                        buildingEntrances.length ===
+                                        0
+                                    }
+                                    onChange={(
+                                        event
+                                    ) =>
+                                        setSelectedEntranceId(
+                                            Number(
+                                                event
+                                                    .target
+                                                    .value
+                                            )
+                                        )
+                                    }
+                                >
+                                    {buildingEntrances.length ===
+                                    0 ? (
+                                        <option value="">
+                                            Brak wejść
+                                        </option>
+                                    ) : (
+                                        buildingEntrances.map(
+                                            (
+                                                entrance
+                                            ) => (
+                                                <option
+                                                    key={
+                                                        entrance.id
+                                                    }
+                                                    value={
+                                                        entrance.id
+                                                    }
+                                                >
+                                                    {
+                                                        entrance.code
+                                                    }
+                                                    {entrance.description
+                                                        ? ` — ${entrance.description}`
+                                                        : ''}
+                                                </option>
+                                            )
+                                        )
+                                    )}
+                                </select>
+                            </label>
+
+                            {selectedEntrance && (
+                                <>
+                                    <div className="lecturer-status-switch">
+                                        <button
+                                            type="button"
+                                            className={
+                                                isOpen
+                                                    ? 'lecturer-status-button lecturer-status-button--open lecturer-status-button--active'
+                                                    : 'lecturer-status-button'
+                                            }
+                                            onClick={() =>
+                                                setIsOpen(
+                                                    true
+                                                )
+                                            }
+                                        >
+                                            Otwarte
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            className={
+                                                !isOpen
+                                                    ? 'lecturer-status-button lecturer-status-button--closed lecturer-status-button--active'
+                                                    : 'lecturer-status-button'
+                                            }
+                                            onClick={() =>
+                                                setIsOpen(
+                                                    false
+                                                )
+                                            }
+                                        >
+                                            Zamknięte
+                                        </button>
+                                    </div>
+
+                                    <div className="lecturer-hours">
+                                        <label className="lecturer-field">
+                                            Od
+
+                                            <input
+                                                type="time"
+                                                value={
+                                                    openFrom
+                                                }
+                                                onChange={(
+                                                    event
+                                                ) =>
+                                                    setOpenFrom(
+                                                        event
+                                                            .target
+                                                            .value
+                                                    )
+                                                }
+                                            />
+                                        </label>
+
+                                        <label className="lecturer-field">
+                                            Do
+
+                                            <input
+                                                type="time"
+                                                value={
+                                                    openUntil
+                                                }
+                                                onChange={(
+                                                    event
+                                                ) =>
+                                                    setOpenUntil(
+                                                        event
+                                                            .target
+                                                            .value
+                                                    )
+                                                }
+                                            />
+                                        </label>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        className="lecturer-save"
+                                        disabled={
+                                            saving
+                                        }
+                                        onClick={
+                                            handleSave
+                                        }
+                                    >
+                                        {saving
+                                            ? 'Zapisywanie...'
+                                            : 'Zapisz zmiany'}
+                                    </button>
+
+                                    {message && (
+                                        <div className="lecturer-message">
+                                            {
+                                                message
+                                            }
+                                        </div>
+                                    )}
+                                </>
                             )}
-                        </>
-                    )}
-                </section>
+                        </div>
+                    </div>
+                )}
             </section>
         </main>
     );
 }
+
 export default LecturerPage;

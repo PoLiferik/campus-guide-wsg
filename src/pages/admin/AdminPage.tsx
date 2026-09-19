@@ -1,3 +1,4 @@
+import UsersAdminSection from './components/UsersAdminSection';
 import {
     useEffect,
     useState,
@@ -7,6 +8,7 @@ import { buildings } from '../../mocks/buildings';
 import { entranceApi } from '../../services/entranceApi';
 import type { Entrance } from '../../types/Entrance';
 import './AdminPage.css';
+
 
 type AdminSection =
     | 'dashboard'
@@ -404,10 +406,7 @@ function AdminPage() {
                 )}
 
                 {section === 'users' && (
-                    <AdminComingSoon
-                        title="Użytkownicy"
-                        description="Tutaj administrator będzie zarządzał kontami i rolami."
-                    />
+                    <UsersAdminSection />
                 )}
             </section>
         </main>
