@@ -10,6 +10,7 @@ export type EntranceAccessibility =
 export type EntranceVerificationStatus =
     | 'unverified'
     | 'verified';
+
 export interface Entrance {
     id: number;
     buildingId: number;

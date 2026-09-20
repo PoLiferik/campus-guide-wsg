@@ -1,422 +1,94 @@
-import {
-    useEffect,
-    useState,
-} from 'react';
-
-import {
-    useNavigate,
-} from 'react-router-dom';
-
-import {
-    authApi,
-} from '../../services/authApi';
-
-import {
-    studentAuthApi,
-} from '../../services/studentAuthApi';
-
-import {
-    userApi,
-} from '../../services/userApi';
-
-import type {
-    User,
-} from '../../types/User';
-
+import {useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {authApi} from '../../services/authApi';
 import './LoginPage.css';
 
-type LoginMode =
-    | 'student'
-    | 'staff';
-
 function LoginPage() {
-    const navigate =
-        useNavigate();
+    const navigate = useNavigate();
 
-    const [
-        mode,
-        setMode
-    ] =
-        useState<LoginMode>(
-            'student'
-        );
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const [
-        users,
-        setUsers
-    ] =
-        useState<User[]>([]);
-
-    const [
-        selectedUserId,
-        setSelectedUserId
-    ] =
-        useState('');
-
-    const [
-        email,
-        setEmail
-    ] =
-        useState('');
-
-    const [
-        password,
-        setPassword
-    ] =
-        useState('');
-
-    const [
-        error,
-        setError
-    ] =
-        useState<string | null>(
-            null
-        );
-
-    const [
-        loading,
-        setLoading
-    ] =
-        useState(false);
-
-    useEffect(() => {
-        async function loadUsers() {
-            const allUsers =
-                await userApi.getAll();
-
-            const activeUsers =
-                allUsers.filter(
-                    (user) =>
-                        user.isActive
-                );
-
-            setUsers(
-                activeUsers
-            );
-
-            if (
-                activeUsers.length >
-                0
-            ) {
-                setSelectedUserId(
-                    String(
-                        activeUsers[0].id
-                    )
-                );
-            }
-        }
-
-        void loadUsers();
-    }, []);
-
-    async function handleStudentLogin(
-        event:
-        React.FormEvent
-    ) {
+    async function handleLogin(event: React.FormEvent) {
         event.preventDefault();
 
         try {
             setLoading(true);
             setError(null);
 
-            await authApi.logout();
+            const user = await authApi.login(username.trim(), password);
 
-            await studentAuthApi
-                .login(
-                    email,
-                    password
-                );
-
-            navigate('/');
-        } catch {
-            setError(
-                'Nieprawidłowy e-mail lub hasło.'
-            );
+            if (user.role === 'Admin') {
+                navigate('/admin');
+            } else {
+                navigate('/lecturer');
+            }
+        } catch (error) {
+            console.error(error);
+            setError('Nieprawidłowa nazwa użytkownika lub hasło.');
         } finally {
             setLoading(false);
         }
     }
 
-    async function handleStaffLogin() {
-        const userId =
-            Number(
-                selectedUserId
-            );
-
-        if (
-            Number.isNaN(userId)
-        ) {
-            return;
-        }
-
-        try {
-            setLoading(true);
-            setError(null);
-
-            await studentAuthApi
-                .logout();
-
-            const user =
-                await authApi.login(
-                    userId
-                );
-
-            if (
-                user.role ===
-                'admin'
-            ) {
-                navigate('/admin');
-            } else {
-                navigate(
-                    '/lecturer'
-                );
-            }
-        } catch {
-            setError(
-                'Nie można zalogować użytkownika.'
-            );
-        } finally {
-            setLoading(false);
-        }
+    function handleGuest() {
+        navigate('/');
     }
 
     return (
         <main className="login-page">
             <section className="login-card">
-                <button
-                    type="button"
-                    className="login-card__back"
-
-                    onClick={() =>
-                        navigate('/')
-                    }
-                >
+                <button className="login-back" type="button" onClick={() => navigate('/')}>
                     ← Mapa kampusu
                 </button>
 
-                <div className="login-card__brand">
-                    <span>
-                        WSG
-                    </span>
-
-                    <h1>
-                        Campus Guide
-                    </h1>
-
-                    <p>
-                        Zaloguj się do swojego konta
-                    </p>
+                <div className="login-brand">
+                    <span>WSG</span>
+                    <h1>Campus Guide</h1>
+                    <p>Zaloguj się jako Admin lub Moderator</p>
                 </div>
 
-                <div className="login-tabs">
-                    <button
-                        type="button"
+                <form className="login-form" onSubmit={handleLogin}>
+                    <label>
+                        Nazwa użytkownika
+                        <input
+                            type="text"
+                            value={username}
+                            placeholder="np. admin"
+                            autoComplete="username"
+                            required
+                            onChange={(event) => setUsername(event.target.value)}
+                        />
+                    </label>
 
-                        className={
-                            mode ===
-                            'student'
-                                ? 'login-tabs__button login-tabs__button--active'
-                                : 'login-tabs__button'
-                        }
+                    <label>
+                        Hasło
+                        <input
+                            type="password"
+                            value={password}
+                            placeholder="••••••••"
+                            autoComplete="current-password"
+                            required
+                            onChange={(event) => setPassword(event.target.value)}
+                        />
+                    </label>
 
-                        onClick={() => {
-                            setMode(
-                                'student'
-                            );
+                    {error && <div className="login-error">{error}</div>}
 
-                            setError(null);
-                        }}
-                    >
-                        Student
+                    <button className="login-submit" type="submit" disabled={loading}>
+                        {loading ? 'Logowanie...' : 'Zaloguj się'}
                     </button>
 
-                    <button
-                        type="button"
-
-                        className={
-                            mode ===
-                            'staff'
-                                ? 'login-tabs__button login-tabs__button--active'
-                                : 'login-tabs__button'
-                        }
-
-                        onClick={() => {
-                            setMode(
-                                'staff'
-                            );
-
-                            setError(null);
-                        }}
-                    >
-                        Pracownik
-                    </button>
-                </div>
-
-                {mode ===
-                'student' ? (
-                    <form
-                        className="login-form"
-                        onSubmit={
-                            handleStudentLogin
-                        }
-                    >
-                        <label>
-                            E-mail
-
-                            <input
-                                type="email"
-                                value={
-                                    email
-                                }
-                                placeholder="student@example.com"
-                                required
-
-                                onChange={(
-                                    event
-                                ) =>
-                                    setEmail(
-                                        event
-                                            .target
-                                            .value
-                                    )
-                                }
-                            />
-                        </label>
-
-                        <label>
-                            Hasło
-
-                            <input
-                                type="password"
-                                value={
-                                    password
-                                }
-                                placeholder="••••••••"
-                                required
-
-                                onChange={(
-                                    event
-                                ) =>
-                                    setPassword(
-                                        event
-                                            .target
-                                            .value
-                                    )
-                                }
-                            />
-                        </label>
-
-                        {error && (
-                            <div className="login-error">
-                                {error}
-                            </div>
-                        )}
-
-                        <button
-                            type="submit"
-                            className="login-form__submit"
-                            disabled={
-                                loading
-                            }
-                        >
-                            {loading
-                                ? 'Logowanie...'
-                                : 'Zaloguj się'}
-                        </button>
-
-                        <div className="login-register">
-                            Nie masz konta?
-
-                            <button
-                                type="button"
-
-                                onClick={() =>
-                                    navigate(
-                                        '/register'
-                                    )
-                                }
-                            >
-                                Zarejestruj się
-                            </button>
-                        </div>
-                    </form>
-                ) : (
-                    <div className="login-form">
-                        <div className="login-demo-info">
-                            Konta wykładowców tworzy administrator.
-                            Wersja demonstracyjna pozwala wybrać konto.
-                        </div>
-
-                        <label>
-                            Konto
-
-                            <select
-                                value={
-                                    selectedUserId
-                                }
-
-                                onChange={(
-                                    event
-                                ) =>
-                                    setSelectedUserId(
-                                        event
-                                            .target
-                                            .value
-                                    )
-                                }
-                            >
-                                {users.map(
-                                    (
-                                        user
-                                    ) => (
-                                        <option
-                                            key={
-                                                user.id
-                                            }
-
-                                            value={
-                                                user.id
-                                            }
-                                        >
-                                            {
-                                                user.name
-                                            }
-                                            {' — '}
-                                            {user.role ===
-                                            'admin'
-                                                ? 'Administrator'
-                                                : 'Wykładowca'}
-                                        </option>
-                                    )
-                                )}
-                            </select>
-                        </label>
-
-                        {error && (
-                            <div className="login-error">
-                                {error}
-                            </div>
-                        )}
-
-                        <button
-                            type="button"
-                            className="login-form__submit"
-
-                            disabled={
-                                loading ||
-                                !selectedUserId
-                            }
-
-                            onClick={() =>
-                                void handleStaffLogin()
-                            }
-                        >
-                            {loading
-                                ? 'Logowanie...'
-                                : 'Zaloguj się'}
-                        </button>
+                    <div className="login-divider">
+                        <span>lub</span>
                     </div>
-                )}
+
+                    <button className="login-guest" type="button" onClick={handleGuest}>
+                        Wejdź jako gość
+                    </button>
+                </form>
             </section>
         </main>
     );

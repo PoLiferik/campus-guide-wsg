@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 
 import {
     CircleMarker,
@@ -8,19 +8,19 @@ import {
     useMap,
 } from 'react-leaflet';
 
-import { CRS } from 'leaflet';
+import {CRS} from 'leaflet';
 
 import type {
     LatLngBoundsExpression,
     LatLngExpression,
 } from 'leaflet';
 
-import { buildings } from '../../mocks/buildings';
-import { authApi } from '../../services/authApi';
+import {buildings} from '../../mocks/buildings';
+import {authApi} from '../../services/authApi';
 
-import type { User } from '../../types/User';
-import type { Entrance } from '../../types/Entrance';
-import type { MapPoint } from '../../types/Building';
+import type {User} from '../../types/User';
+import type {Entrance} from '../../types/Entrance';
+import type {MapPoint} from '../../types/Building';
 
 import EntranceMarker from '../EntranceMarker/EntranceMarker';
 
@@ -182,14 +182,14 @@ function CampusMap({
 
         if (
             currentUser.role ===
-            'admin'
+            'Admin'
         ) {
             return true;
         }
 
         if (
             currentUser.role ===
-            'lecturer'
+            'Moderator'
         ) {
             return currentUser
                 .assignedBuildingIds
@@ -229,7 +229,7 @@ function CampusMap({
         */
         if (
             currentUser.role ===
-            'admin'
+            'Admin'
         ) {
             return '#22c55e';
         }
@@ -288,7 +288,7 @@ function CampusMap({
                 zoomControl={false}
                 attributionControl={false}
             >
-                <InitialMapView />
+                <InitialMapView/>
 
                 <ImageOverlay
                     url={IMAGE_URL}
@@ -370,9 +370,9 @@ function CampusMap({
                                     </strong>
 
                                     {currentUser?.role ===
-                                        'lecturer' && (
+                                        'Moderator' && (
                                             <>
-                                                <br />
+                                                <br/>
 
                                                 {canEdit
                                                     ? 'Możesz zarządzać tym budynkiem'

@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import {useEffect, useMemo, useState} from 'react';
+import {Link, useNavigate} from 'react-router-dom';
 
-import { buildings } from '../../mocks/buildings';
-import { entranceApi } from '../../services/entranceApi';
-import { authApi } from '../../services/authApi';
+import {buildings} from '../../mocks/buildings';
+import {entranceApi} from '../../services/entranceApi';
+import {authApi} from '../../services/authApi';
 
-import type { Entrance } from '../../types/Entrance';
-import type { User } from '../../types/User';
+import type {Entrance} from '../../types/Entrance';
+import type {User} from '../../types/User';
 
 import './LecturerPage.css';
 
@@ -43,6 +43,23 @@ function LecturerPage() {
     const [message, setMessage] =
         useState<string | null>(null);
 
+    const selectEntrance =
+        (entrance: Entrance | null) => {
+            setSelectedEntranceId(
+                entrance?.id ?? null
+            );
+            setIsOpen(
+                entrance?.isOpen ?? true
+            );
+            setOpenFrom(
+                entrance?.openFrom ?? '07:00'
+            );
+            setOpenUntil(
+                entrance?.openUntil ?? '21:00'
+            );
+            setMessage(null);
+        };
+
     useEffect(() => {
         const load = async () => {
             try {
@@ -62,7 +79,7 @@ function LecturerPage() {
                 setAllEntrances(entrances);
 
                 const availableBuildings =
-                    user.role === 'admin'
+                    user.role === 'Admin'
                         ? buildings
                         : buildings.filter(
                             (building) =>
@@ -72,8 +89,16 @@ function LecturerPage() {
                         );
 
                 if (availableBuildings.length > 0) {
-                    setSelectedBuildingId(
-                        availableBuildings[0].id
+                    const firstBuilding =
+                        availableBuildings[0];
+
+                    setSelectedBuildingId(firstBuilding.id);
+                    selectEntrance(
+                        entrances.find(
+                            (entrance) =>
+                                entrance.buildingId ===
+                                firstBuilding.id
+                        ) ?? null
                     );
                 }
             } catch (error) {
@@ -92,7 +117,7 @@ function LecturerPage() {
                 return [];
             }
 
-            if (currentUser.role === 'admin') {
+            if (currentUser.role === 'Admin') {
                 return buildings;
             }
 
@@ -133,51 +158,6 @@ function LecturerPage() {
                 selectedEntranceId,
             ]
         );
-
-    useEffect(() => {
-        if (buildingEntrances.length === 0) {
-            setSelectedEntranceId(null);
-            return;
-        }
-
-        const currentStillExists =
-            buildingEntrances.some(
-                (entrance) =>
-                    entrance.id ===
-                    selectedEntranceId
-            );
-
-        if (!currentStillExists) {
-            setSelectedEntranceId(
-                buildingEntrances[0].id
-            );
-        }
-    }, [
-        buildingEntrances,
-        selectedEntranceId,
-    ]);
-
-    useEffect(() => {
-        if (!selectedEntrance) {
-            return;
-        }
-
-        setIsOpen(
-            selectedEntrance.isOpen ?? true
-        );
-
-        setOpenFrom(
-            selectedEntrance.openFrom ??
-            '07:00'
-        );
-
-        setOpenUntil(
-            selectedEntrance.openUntil ??
-            '21:00'
-        );
-
-        setMessage(null);
-    }, [selectedEntrance]);
 
     const handleSave =
         async () => {
@@ -270,7 +250,7 @@ function LecturerPage() {
                     </strong>
 
                     <small>
-                        {currentUser.role === 'admin'
+                        {currentUser.role === 'Admin'
                             ? 'Administrator'
                             : 'Wykładowca'}
                     </small>
@@ -306,7 +286,7 @@ function LecturerPage() {
                     </Link>
 
                     {currentUser.role ===
-                        'admin' && (
+                        'Admin' && (
                             <Link
                                 to="/admin"
                                 className="lecturer-link"
@@ -374,16 +354,22 @@ function LecturerPage() {
                                     onChange={(
                                         event
                                     ) => {
-                                        setSelectedBuildingId(
+                                        const buildingId =
                                             Number(
                                                 event
                                                     .target
                                                     .value
-                                            )
-                                        );
+                                            );
 
-                                        setSelectedEntranceId(
-                                            null
+                                        setSelectedBuildingId(
+                                            buildingId
+                                        );
+                                        selectEntrance(
+                                            allEntrances.find(
+                                                (entrance) =>
+                                                    entrance.buildingId ===
+                                                    buildingId
+                                            ) ?? null
                                         );
                                     }}
                                 >
@@ -448,15 +434,22 @@ function LecturerPage() {
                                     }
                                     onChange={(
                                         event
-                                    ) =>
-                                        setSelectedEntranceId(
+                                    ) => {
+                                        const entranceId =
                                             Number(
                                                 event
                                                     .target
                                                     .value
-                                            )
-                                        )
-                                    }
+                                            );
+
+                                        selectEntrance(
+                                            buildingEntrances.find(
+                                                (entrance) =>
+                                                    entrance.id ===
+                                                    entranceId
+                                            ) ?? null
+                                        );
+                                    }}
                                 >
                                     {buildingEntrances.length ===
                                     0 ? (

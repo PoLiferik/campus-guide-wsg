@@ -1,4 +1,4 @@
-import type { Entrance } from './Entrance';
+import type {Entrance} from './Entrance';
 
 export interface RoomDetails {
     id: number;

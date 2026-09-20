@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import {useState, type FormEvent} from 'react';
 
 import './SearchBar.css';
 
@@ -6,7 +6,7 @@ interface SearchBarProps {
     onSearch: (query: string) => void;
 }
 
-function SearchBar({ onSearch }: SearchBarProps) {
+function SearchBar({onSearch}: SearchBarProps) {
     const [query, setQuery] = useState('');
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -26,7 +26,7 @@ function SearchBar({ onSearch }: SearchBarProps) {
             <input
                 type="text"
                 value={query}
-                onChange={({ target }) => setQuery(target.value)}
+                onChange={({target}) => setQuery(target.value)}
                 placeholder="Wpisz budynek lub numer sali"
                 maxLength={50}
                 className="search-bar__input"

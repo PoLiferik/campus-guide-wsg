@@ -1,5 +1,5 @@
-import type { SearchResult } from '../../types/Search';
-import type { Entrance } from '../../types/Entrance';
+import type {SearchResult} from '../../types/Search';
+import type {Entrance} from '../../types/Entrance';
 
 import './DetailsPanel.css';
 

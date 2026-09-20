@@ -3,57 +3,43 @@ import {
     Route,
     Routes,
 } from 'react-router-dom';
-
 import CampusPage from './pages/CampusPage';
-
 import LoginPage from './pages/login/LoginPage';
-import RegisterPage from './pages/register/RegisterPage';
-
 import LecturerPage from './pages/lecturer/LecturerPage';
 import AdminPage from './pages/admin/AdminPage';
-
 import AccountMenu from './components/AccountMenu/AccountMenu';
-
 import './App.css';
 
 function App() {
     return (
         <>
-            <AccountMenu />
+            <AccountMenu/>
 
             <Routes>
                 <Route
                     path="/"
                     element={
-                        <CampusPage />
+                        <CampusPage/>
                     }
                 />
 
                 <Route
                     path="/login"
                     element={
-                        <LoginPage />
+                        <LoginPage/>
                     }
                 />
-
-                <Route
-                    path="/register"
-                    element={
-                        <RegisterPage />
-                    }
-                />
-
                 <Route
                     path="/lecturer"
                     element={
-                        <LecturerPage />
+                        <LecturerPage/>
                     }
                 />
 
                 <Route
                     path="/admin"
                     element={
-                        <AdminPage />
+                        <AdminPage/>
                     }
                 />
 

@@ -1,770 +1,586 @@
 .campus-page {
     width: 100%;
     min-height: 100vh;
-    height: auto;
-    overflow: visible;
+    background: #e5e7eb;
 }
 
-/* MENU */
-
-.campus-menu {
+.campus-panel {
     position: fixed;
     top: 14px;
     right: 14px;
-    z-index: 5000;
-
-    width: min(350px, calc(100vw - 28px));
-    max-height: 78vh;
-
+    z-index: 1100;
+    width: 350px;
+    max-height: calc(100vh - 28px);
     padding: 12px;
     box-sizing: border-box;
-
-    overflow-x: hidden;
     overflow-y: auto;
-
-    border: 1px solid rgba(17, 24, 39, 0.08);
-    border-radius: 15px;
-
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    border-radius: 16px;
     background: rgba(255, 255, 255, 0.97);
-
-    box-shadow:
-            0 8px 26px
-            rgba(0, 0, 0, 0.15);
-
-    backdrop-filter: blur(10px);
+    box-shadow: 0 12px 34px rgba(15, 23, 42, 0.16);
 }
 
-.campus-menu::-webkit-scrollbar {
+.campus-panel::-webkit-scrollbar {
     width: 5px;
 }
 
-.campus-menu::-webkit-scrollbar-thumb {
-    border-radius: 999px;
-    background: #d1d5db;
+.campus-panel::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: #cbd5e1;
 }
 
-/* TOGGLE */
-
-.campus-menu-toggle {
+.campus-panel-toggle {
     position: fixed;
     top: 14px;
     right: 14px;
-    z-index: 5000;
-
-    width: 44px;
-    height: 44px;
-
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-
-    background: white;
-    color: #111827;
-
-    box-shadow:
-            0 5px 18px
-            rgba(0, 0, 0, 0.14);
-
-    font-size: 19px;
+    z-index: 1100;
+    width: 42px;
+    height: 42px;
+    border: 0;
+    border-radius: 11px;
+    background: #0f172a;
+    color: white;
+    font-size: 17px;
     cursor: pointer;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
 }
 
-/* HEADER */
-
-.campus-menu__header {
+.campus-panel__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-
     gap: 10px;
     margin-bottom: 10px;
 }
 
-.campus-menu__header-actions {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.campus-menu__logo {
-    color: #9ca3af;
-
-    font-size: 9px;
+.campus-panel__header span {
+    display: block;
+    margin-bottom: 1px;
+    color: #94a3b8;
+    font-size: 8px;
     font-weight: 800;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.12em;
 }
 
-.campus-menu__header h1 {
-    margin: 1px 0 0;
-
-    color: #111827;
+.campus-panel__header h1 {
+    margin: 0;
+    color: #0f172a;
     font-size: 18px;
+    line-height: 1.1;
 }
 
-.campus-menu__building-code,
-.campus-menu__hide {
+.campus-panel__header-actions {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 7px;
+}
 
+.campus-building-badge {
     width: 34px;
     height: 34px;
-
-    border-radius: 9px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    margin: 0 !important;
+    border-radius: 10px;
+    background: #0f172a;
+    color: white !important;
+    font-size: 12px !important;
+    letter-spacing: 0 !important;
 }
 
-.campus-menu__building-code {
-    background: #111827;
-    color: white;
-
-    font-size: 15px;
-    font-weight: 800;
-}
-
-.campus-menu__hide {
+.campus-panel__hide {
+    width: 34px;
+    height: 34px;
     padding: 0;
-
-    border: 1px solid #e5e7eb;
-
-    background: #f9fafb;
-    color: #374151;
-
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #475569;
     font-size: 18px;
     cursor: pointer;
 }
 
-/* BUILDING */
-
-.campus-building-panel {
-    margin-top: 9px;
+.campus-search {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 7px;
 }
 
-.campus-building-panel__top {
+.campus-search input {
+    min-width: 0;
+    padding: 11px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    background: white;
+    color: #0f172a;
+    font-size: 12px;
+}
+
+.campus-search input:focus {
+    border-color: #2563eb;
+    outline: none;
+}
+
+.campus-search button {
+    padding: 0 16px;
+    border: 0;
+    border-radius: 9px;
+    background: #0f172a;
+    color: white;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.campus-search button:disabled {
+    opacity: 0.6;
+}
+
+.campus-search-results {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 7px;
+    padding: 5px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: white;
+}
+
+.campus-search-results button {
     display: flex;
     align-items: center;
     justify-content: space-between;
-
-    padding: 9px 10px;
-
-    border-radius: 10px;
-    background: #f3f4f6;
+    gap: 10px;
+    padding: 8px 9px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
 }
 
-.campus-building-panel__top > div {
+.campus-search-results button:hover {
+    background: #f1f5f9;
+}
+
+.campus-search-results strong {
+    color: #0f172a;
+    font-size: 11px;
+}
+
+.campus-search-results span {
+    color: #94a3b8;
+    font-size: 9px;
+}
+
+.campus-selected-building {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 9px;
+    padding: 8px 10px;
+    border-radius: 9px;
+    background: #f1f5f9;
+}
+
+.campus-selected-building div {
     display: flex;
     flex-direction: column;
 }
 
-.campus-building-panel__top span {
-    color: #6b7280;
-    font-size: 9px;
+.campus-selected-building span {
+    color: #94a3b8;
+    font-size: 8px;
 }
 
-.campus-building-panel__top strong {
-    font-size: 12px;
+.campus-selected-building strong {
+    color: #0f172a;
+    font-size: 10px;
 }
 
-.campus-building-panel__top button {
+.campus-selected-building button {
     width: 27px;
     height: 27px;
-
     padding: 0;
-
     border: 0;
     border-radius: 7px;
-
     background: white;
-
-    font-size: 17px;
+    color: #64748b;
+    font-size: 16px;
     cursor: pointer;
 }
 
-/* LEGEND */
-
-.room-status-legend {
+.campus-legend {
     display: flex;
-    flex-wrap: wrap;
-
-    gap: 7px 10px;
-
-    margin: 8px 2px 4px;
-
-    color: #6b7280;
-    font-size: 9px;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 2px;
+    color: #64748b;
+    font-size: 8px;
 }
 
-.room-status-legend span {
+.campus-legend span {
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
-.room-status-dot {
-    width: 7px;
-    height: 7px;
+.campus-dot {
+    width: 6px;
+    height: 6px;
+    display: inline-block;
     border-radius: 50%;
 }
 
-.room-status-dot--free {
+.campus-dot--free {
     background: #22c55e;
 }
 
-.room-status-dot--lecture {
+.campus-dot--lecture {
     background: #f59e0b;
 }
 
-.room-status-dot--closed {
+.campus-dot--closed {
     background: #ef4444;
 }
 
-/* FLOOR */
-
-.floor-accordion {
-    display: flex;
-    flex-direction: column;
-
-    gap: 5px;
-    margin-top: 7px;
+.campus-message {
+    margin-top: 8px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 10px;
 }
 
-.floor-accordion__item {
-    overflow: hidden;
+.campus-message--error {
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+}
 
-    border: 1px solid #e5e7eb;
+.campus-floor {
+    margin-top: 5px;
+    border: 1px solid #e2e8f0;
     border-radius: 10px;
-
+    overflow: hidden;
     background: white;
 }
 
-.floor-accordion__button {
-    display: grid;
-    grid-template-columns: 30px 1fr 18px;
-
-    align-items: center;
-
-    gap: 8px;
-
+.campus-floor__header {
     width: 100%;
-    padding: 7px;
-
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
     border: 0;
-    background: transparent;
-
-    text-align: left;
+    background: white;
+    color: #475569;
     cursor: pointer;
 }
 
-.floor-accordion__floor {
+.campus-floor__header > div {
     display: flex;
     align-items: center;
-    justify-content: center;
-
-    width: 30px;
-    height: 30px;
-
-    border-radius: 8px;
-
-    background: #f3f4f6;
-
-    font-size: 12px;
-    font-weight: 800;
+    gap: 8px;
 }
 
-.floor-accordion__item--open
-.floor-accordion__floor {
-    background: #111827;
-    color: white;
-}
-
-.floor-accordion__label {
+.campus-floor__header > div > div {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
 }
 
-.floor-accordion__label strong {
-    font-size: 12px;
+.campus-floor__header strong {
+    color: #0f172a;
+    font-size: 11px;
 }
 
-.floor-accordion__label span {
-    color: #9ca3af;
-    font-size: 9px;
+.campus-floor__header small {
+    color: #94a3b8;
+    font-size: 8px;
 }
 
-.floor-accordion__arrow {
-    color: #6b7280;
-    font-size: 20px;
-
-    transition: transform 0.2s ease;
-}
-
-.floor-accordion__item--open
-.floor-accordion__arrow {
-    transform: rotate(90deg);
-}
-
-/* ACCORDION */
-
-.floor-accordion__content {
-    display: grid;
-    grid-template-rows: 0fr;
-
-    transition:
-            grid-template-rows
-            0.2s ease;
-}
-
-.floor-accordion__item--open
-.floor-accordion__content {
-    grid-template-rows: 1fr;
-}
-
-.floor-accordion__inner {
-    min-height: 0;
-    overflow: hidden;
-}
-
-.room-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-
-    gap: 6px;
-
-    padding: 2px 7px 8px;
-}
-
-/* ROOM */
-
-.room-button {
-    position: relative;
-
+.campus-floor__icon {
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-
-    min-height: 34px;
-
-    padding: 5px 15px 5px 7px;
-
-    border: 2px solid #e5e7eb;
     border-radius: 8px;
-
-    background: white;
-
+    background: #0f172a;
+    color: white;
     font-size: 10px;
     font-weight: 800;
+}
 
+.campus-floor__content {
+    padding: 0 8px 8px;
+}
+
+.campus-room-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.campus-room {
+    position: relative;
+    min-height: 34px;
+    padding: 6px;
+    border: 1px solid;
+    border-radius: 7px;
+    background: white;
+    color: #0f172a;
+    font-size: 10px;
+    font-weight: 800;
     cursor: pointer;
 }
 
-.room-button--free {
+.campus-room i {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+}
+
+.campus-room--free {
     border-color: #22c55e;
     background: #f0fdf4;
 }
 
-.room-button--lecture {
+.campus-room--free i {
+    background: #22c55e;
+}
+
+.campus-room--lecture {
     border-color: #f59e0b;
     background: #fffbeb;
 }
 
-.room-button--closed {
+.campus-room--lecture i {
+    background: #f59e0b;
+}
+
+.campus-room--closed {
     border-color: #ef4444;
     background: #fef2f2;
 }
 
-.room-button--selected {
-    background: #111827;
-    color: white;
-}
-
-.room-button__dot {
-    position: absolute;
-
-    top: 5px;
-    right: 5px;
-
-    width: 6px;
-    height: 6px;
-
-    border-radius: 50%;
-}
-
-.room-button__dot--free {
-    background: #22c55e;
-}
-
-.room-button__dot--lecture {
-    background: #f59e0b;
-}
-
-.room-button__dot--closed {
+.campus-room--closed i {
     background: #ef4444;
 }
 
-/* ROOM INFO */
+.campus-room--selected {
+    border-color: #0f172a;
+    background: #0f172a;
+    color: white;
+}
 
-.inline-room-info {
-    margin: 0 7px 8px;
+.campus-room-details {
+    margin-top: 8px;
     padding: 10px;
-
-    border-top: 1px solid #e5e7eb;
-
-    background: #fafafa;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    background: #f8fafc;
 }
 
-.inline-room-info__header {
+.campus-room-details__header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    gap: 10px;
 }
 
-.inline-room-info__header > div {
+.campus-room-details__header > div {
     display: flex;
     flex-direction: column;
 }
 
-.inline-room-info__header span {
-    color: #9ca3af;
-    font-size: 9px;
+.campus-room-details__header > div span {
+    color: #94a3b8;
+    font-size: 8px;
 }
 
-.inline-room-info__header strong {
-    font-size: 14px;
+.campus-room-details__header strong {
+    color: #0f172a;
+    font-size: 12px;
 }
 
-.inline-room-info__header button {
-    width: 26px;
-    height: 26px;
-
-    border: 0;
-    border-radius: 7px;
-
-    background: #f3f4f6;
-
-    cursor: pointer;
-}
-
-.inline-room-info__meta {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-
-    gap: 6px;
-
-    margin-top: 5px;
-
-    color: #6b7280;
-    font-size: 9px;
-}
-
-.inline-room-status {
-    padding: 2px 6px;
-
+.campus-room-status {
+    padding: 4px 7px;
     border-radius: 999px;
-
     font-size: 8px;
     font-weight: 800;
 }
 
-.inline-room-status--free {
+.campus-room-status--free {
     background: #dcfce7;
     color: #15803d;
 }
 
-.inline-room-status--lecture {
+.campus-room-status--lecture {
     background: #fef3c7;
     color: #b45309;
 }
 
-.inline-room-status--closed {
+.campus-room-status--closed {
     background: #fee2e2;
     color: #b91c1c;
 }
 
-/* ACTIVE LECTURE */
-
-.active-lecture {
-    display: grid;
-    grid-template-columns: 18px 1fr auto;
-
-    align-items: center;
-
-    gap: 7px;
-
-    margin-top: 9px;
-    padding: 9px;
-
-    border: 1px solid #f59e0b;
-    border-radius: 9px;
-
-    background: #fffbeb;
-}
-
-.active-lecture__icon {
-    color: #f59e0b;
-    font-size: 12px;
-}
-
-.active-lecture__content {
+.campus-active-lecture {
     display: flex;
     flex-direction: column;
-
-    min-width: 0;
+    gap: 2px;
+    margin-top: 8px;
+    padding: 8px;
+    border-radius: 8px;
+    background: white;
 }
 
-.active-lecture__content span {
-    color: #b45309;
-
-    font-size: 8px;
-    font-weight: 800;
-}
-
-.active-lecture__content strong {
-    color: #111827;
+.campus-active-lecture strong {
+    color: #0f172a;
     font-size: 10px;
 }
 
-.active-lecture__content small {
-    margin-top: 2px;
+.campus-active-lecture span {
+    color: #475569;
+    font-size: 9px;
+}
 
-    color: #6b7280;
+.campus-active-lecture small {
+    color: #94a3b8;
     font-size: 8px;
 }
-
-.active-lecture__time {
-    color: #92400e !important;
-
-    font-weight: 700;
-}
-
-.active-lecture button {
-    padding: 5px 7px;
-
-    border: 1px solid #f59e0b;
-    border-radius: 6px;
-
-    background: white;
-    color: #b45309;
-
-    font-size: 8px;
-    font-weight: 800;
-
-    cursor: pointer;
-}
-
-/* ROOM MANAGER */
 
 .room-manager {
-    margin-top: 9px;
-    padding: 9px;
-
-    border: 1px solid #e5e7eb;
-    border-radius: 9px;
-
-    background: white;
-}
-
-.room-manager__header {
-    display: flex;
-    flex-direction: column;
-
-    margin-bottom: 7px;
-}
-
-.room-manager__header span {
-    font-size: 10px;
-    font-weight: 800;
-}
-
-.room-manager__header small {
-    color: #9ca3af;
-    font-size: 8px;
+    margin-top: 8px;
 }
 
 .room-manager__buttons {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-
     gap: 5px;
 }
 
-.room-manager__button {
-    min-width: 0;
-
-    padding: 7px 3px;
-
-    border: 1px solid #e5e7eb;
+.room-manager__buttons button,
+.room-manager__end,
+.room-manager__lecture > button {
+    padding: 7px;
+    border: 1px solid #cbd5e1;
     border-radius: 7px;
-
     background: white;
-    color: #6b7280;
-
-    font-size: 8px;
+    color: #334155;
+    font-size: 9px;
     font-weight: 800;
-
     cursor: pointer;
 }
 
-.room-manager__button--free.room-manager__button--active {
-    border-color: #22c55e;
-
-    background: #dcfce7;
-    color: #15803d;
+.room-manager__buttons button:hover {
+    background: #f1f5f9;
 }
 
-.room-manager__button--lecture.room-manager__button--active {
-    border-color: #f59e0b;
-
-    background: #fef3c7;
-    color: #b45309;
-}
-
-.room-manager__button--closed.room-manager__button--active {
-    border-color: #ef4444;
-
-    background: #fee2e2;
-    color: #b91c1c;
-}
-
-/* LECTURE FORM */
-
-.lecture-form {
-    margin-top: 8px;
-    padding-top: 8px;
-
-    border-top: 1px solid #e5e7eb;
-}
-
-.lecture-form label {
+.room-manager__lecture {
     display: flex;
     flex-direction: column;
-
-    gap: 4px;
-
-    color: #374151;
-
-    font-size: 8px;
-    font-weight: 800;
-}
-
-.lecture-form input {
-    width: 100%;
-
-    padding: 7px 8px;
-
-    box-sizing: border-box;
-
-    border: 1px solid #d1d5db;
-    border-radius: 7px;
-
-    background: white;
-
-    font-size: 9px;
-}
-
-.lecture-form input:focus {
-    border-color: #f59e0b;
-    outline: none;
-}
-
-/* OD / DO */
-
-.lecture-form__times {
-    display: grid;
-    grid-template-columns:
-        repeat(2, minmax(0, 1fr));
-
-    gap: 8px;
-
-    margin-top: 8px;
-}
-
-.lecture-form__times label {
-    min-width: 0;
-}
-
-.lecture-form__times input {
-    min-width: 0;
-}
-
-.lecture-form__teacher {
-    margin-top: 7px;
-
-    padding: 6px 7px;
-
-    border-radius: 6px;
-
-    background: #f3f4f6;
-
-    color: #6b7280;
-
-    font-size: 8px;
-}
-
-.lecture-form__teacher strong {
-    color: #111827;
-}
-
-.lecture-form__start {
-    width: 100%;
-
+    gap: 7px;
     margin-top: 7px;
     padding: 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+}
 
-    border: 0;
+.room-manager__lecture > input {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #cbd5e1;
     border-radius: 7px;
+    font-size: 10px;
+}
 
-    background: #111827;
+.room-manager__lecture > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.room-manager__lecture label {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    color: #64748b;
+    font-size: 8px;
+    font-weight: 700;
+}
+
+.room-manager__lecture label input {
+    width: 100%;
+    padding: 7px;
+    box-sizing: border-box;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    font-size: 10px;
+}
+
+.room-manager__lecture > button {
+    border: 0;
+    background: #0f172a;
     color: white;
-
-    font-size: 9px;
-    font-weight: 800;
-
-    cursor: pointer;
 }
 
-.lecture-form__start:hover {
-    background: #1f2937;
-}
-
-.lecture-form__start:disabled {
-    opacity: 0.55;
-    cursor: default;
+.room-manager__end {
+    width: 100%;
+    margin-top: 7px;
+    border-color: #fecaca;
+    background: #fff;
+    color: #dc2626;
 }
 
 .room-manager__error {
     margin-top: 7px;
-
-    padding: 6px 7px;
-
-    border-radius: 6px;
-
-    background: #fee2e2;
+    padding: 7px;
+    border-radius: 7px;
+    background: #fef2f2;
     color: #b91c1c;
-
-    font-size: 8px;
-}
-
-.inline-room-info__directions {
-    margin: 8px 0 0;
-
-    color: #4b5563;
-
     font-size: 9px;
 }
 
-/* MOBILE */
+.room-manager button:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.campus-panel__empty {
+    margin-top: 12px;
+    padding: 18px 12px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    color: #94a3b8;
+    text-align: center;
+    font-size: 10px;
+}
 
 @media (max-width: 700px) {
-    .campus-menu {
-        top: 8px;
+    .campus-panel {
+        top: auto;
         right: 8px;
+        bottom: 8px;
         left: 8px;
-
         width: auto;
-        max-height: 58vh;
+        max-height: 55vh;
     }
 
-    .campus-menu-toggle {
-        top: 8px;
-        right: 8px;
+    .campus-panel-toggle {
+        top: auto;
+        right: 10px;
+        bottom: 10px;
     }
 }

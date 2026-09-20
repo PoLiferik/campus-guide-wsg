@@ -1,249 +1,97 @@
-import { useEffect, useState } from 'react';
-import {
-    useLocation,
-    useNavigate,
-} from 'react-router-dom';
-
-import { authApi } from '../../services/authApi';
-import {
-    studentAuthApi,
-} from '../../services/studentAuthApi';
-
-import type {
-    StudentSession,
-} from '../../services/studentAuthApi';
-
-import type { User } from '../../types/User';
-
+import {useEffect, useState} from 'react';
+import {useLocation, useNavigate} from 'react-router-dom';
+import {authApi} from '../../services/authApi';
+import type {User} from '../../types/User';
 import './AccountMenu.css';
 
 function AccountMenu() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const [staffUser, setStaffUser] =
-        useState<User | null>(null);
-
-    const [student, setStudent] =
-        useState<StudentSession | null>(null);
-
-    const [open, setOpen] =
-        useState(false);
+    const [user, setUser] = useState<User | null>(null);
+    const [open, setOpen] = useState(false);
 
     useEffect(() => {
-        let cancelled = false;
-
-        async function loadSession() {
-            const [staff, studentSession] =
-                await Promise.all([
-                    authApi.getCurrentUser(),
-                    studentAuthApi.getCurrentStudent(),
-                ]);
-
-            if (cancelled) {
-                return;
-            }
-
-            setStaffUser(staff);
-
-            setStudent(
-                staff
-                    ? null
-                    : studentSession
-            );
-        }
-
-        void loadSession();
-
-        return () => {
-            cancelled = true;
-        };
+        authApi.getCurrentUser().then(setUser);
     }, [location.pathname]);
-
-    /*
-        AccountMenu pokazujemy tylko
-        na głównej mapie.
-    */
-    if (location.pathname !== '/') {
-        return null;
-    }
-
-    const currentName =
-        staffUser?.name ??
-        student?.name ??
-        null;
-
-    const currentEmail =
-        staffUser?.email ??
-        student?.email ??
-        null;
-
-    function getRoleText() {
-        if (
-            staffUser?.role ===
-            'admin'
-        ) {
-            return 'Administrator';
-        }
-
-        if (
-            staffUser?.role ===
-            'lecturer'
-        ) {
-            return 'Wykładowca';
-        }
-
-        if (student) {
-            return 'Student';
-        }
-
-        return '';
-    }
 
     function goTo(path: string) {
         setOpen(false);
         navigate(path);
     }
 
-    async function handleLogout() {
+    async function logout() {
+        await authApi.logout();
+        setUser(null);
         setOpen(false);
-
-        await Promise.all([
-            authApi.logout(),
-            studentAuthApi.logout(),
-        ]);
-
-        window.location.href = '/';
+        navigate('/');
     }
 
-    if (!currentName) {
+    if (location.pathname !== '/') return null;
+
+    if (!user) {
         return (
-            <div className="account-menu account-menu--map">
+            <div className="account-menu">
                 <button
                     type="button"
                     className="account-menu__login"
-                    onClick={() =>
-                        goTo('/login')
-                    }
+                    onClick={() => navigate('/login')}
                 >
                     Zaloguj się
-                </button>
-
-                <button
-                    type="button"
-                    className="account-menu__register"
-                    onClick={() =>
-                        goTo('/register')
-                    }
-                >
-                    Rejestracja
                 </button>
             </div>
         );
     }
 
-    const initial =
-        currentName
-            .trim()
-            .charAt(0)
-            .toUpperCase();
-
     return (
-        <div className="account-menu account-menu--map">
+        <div className="account-menu">
             <button
                 type="button"
-                className="account-menu__profile"
-                onClick={() =>
-                    setOpen(
-                        (current) =>
-                            !current
-                    )
-                }
+                className="account-menu__button"
+                onClick={() => setOpen((current) => !current)}
             >
                 <span className="account-menu__avatar">
-                    {initial}
+                    {user.name.charAt(0).toUpperCase()}
                 </span>
 
-                <span className="account-menu__profile-text">
-                    <strong>
-                        {currentName}
-                    </strong>
-
-                    <small>
-                        {getRoleText()}
-                    </small>
+                <span className="account-menu__user">
+                    <strong>{user.name}</strong>
+                    <small>{user.role}</small>
                 </span>
 
-                <span className="account-menu__chevron">
-                    {open
-                        ? '▲'
-                        : '▼'}
+                <span className="account-menu__arrow">
+                    {open ? '▲' : '▼'}
                 </span>
             </button>
 
             {open && (
                 <div className="account-menu__dropdown">
-                    <div className="account-menu__user">
-                        <strong>
-                            {currentName}
-                        </strong>
-
-                        <span>
-                            {currentEmail}
-                        </span>
-
-                        <small>
-                            {getRoleText()}
-                        </small>
+                    <div className="account-menu__profile">
+                        <strong>{user.name}</strong>
+                        <span>{user.email}</span>
+                        <small>{user.role}</small>
                     </div>
 
-                    <div className="account-menu__divider" />
-
-                    <button
-                        type="button"
-                        onClick={() =>
-                            goTo('/')
-                        }
-                    >
+                    <button type="button" onClick={() => goTo('/')}>
                         Mapa kampusu
                     </button>
 
-                    {staffUser?.role ===
-                        'lecturer' && (
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    goTo(
-                                        '/lecturer'
-                                    )
-                                }
-                            >
-                                Panel wykładowcy
-                            </button>
-                        )}
+                    {user.role === 'Admin' && (
+                        <button type="button" onClick={() => goTo('/admin')}>
+                            Panel administratora
+                        </button>
+                    )}
 
-                    {staffUser?.role ===
-                        'admin' && (
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    goTo(
-                                        '/admin'
-                                    )
-                                }
-                            >
-                                Panel administratora
-                            </button>
-                        )}
-
-                    <div className="account-menu__divider" />
+                    {user.role === 'Moderator' && (
+                        <button type="button" onClick={() => goTo('/lecturer')}>
+                            Panel Moderatora
+                        </button>
+                    )}
 
                     <button
                         type="button"
                         className="account-menu__logout"
-                        onClick={() =>
-                            void handleLogout()
-                        }
+                        onClick={() => void logout()}
                     >
                         Wyloguj się
                     </button>

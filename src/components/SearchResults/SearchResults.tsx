@@ -1,4 +1,4 @@
-import type { SearchResult } from '../../types/Search';
+import type {SearchResult} from '../../types/Search';
 
 import './SearchResults.css';
 
@@ -10,7 +10,7 @@ interface SearchResultsProps {
     onSelect: (result: SearchResult) => void;
 }
 
-function SearchResults({ results, loading, error, searched, onSelect }: SearchResultsProps) {
+function SearchResults({results, loading, error, searched, onSelect}: SearchResultsProps) {
     if (loading) {
         return <div className="search-status">Szukanie...</div>;
     }

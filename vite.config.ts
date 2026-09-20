@@ -1,7 +1,19 @@
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-// https://vite.dev/config/
+const backend = {
+    target: 'https://localhost:7138',
+    changeOrigin: true,
+    secure: false,
+};
+
 export default defineConfig({
-  plugins: [react()],
-})
+    plugins: [react()],
+    server: {
+        proxy: {
+            '/api': backend,
+            '/add-building': backend,
+            '/remove-building': backend,
+        },
+    },
+});

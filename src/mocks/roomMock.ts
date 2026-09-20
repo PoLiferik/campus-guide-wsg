@@ -1,20 +1,15 @@
-import type { RoomDetails } from '../types/Room';
-import { entrances } from './entrances';
+import type {RoomDetails} from '../types/Room';
+import {entrances} from './entrances';
 
 
 interface DemoRoom {
     id: number;
-
     buildingId: number;
     buildingCode: string;
-
     number: string;
-
     floor: number;
     floorLabel: string;
 }
-
-
 const buildingCodes = [
     'A',
     'B',
@@ -33,48 +28,22 @@ export const demoRooms: DemoRoom[] = [];
 
 
 buildingCodes.forEach(
-    (buildingCode, buildingIndex) => {
-
-        const buildingId =
-            buildingIndex + 1;
-
-
-        for (
-            let floor = 0;
-            floor <= 2;
-            floor++
-        ) {
-
-            for (
-                let roomIndex = 1;
-                roomIndex <= 8;
-                roomIndex++
-            ) {
-
-                const number =
-                    `${floor}${roomIndex
-                        .toString()
-                        .padStart(2, '0')}`;
-
-
+    (buildingCode, buildingIndex) =>
+    {
+        const buildingId = buildingIndex + 1;
+        for (let floor = 0; floor <= 2; floor++)
+        {
+            for (let roomIndex = 1; roomIndex <= 8; roomIndex++)
+            {
+                const number = `${floor}${roomIndex.toString().padStart(2, '0')}`;
                 demoRooms.push({
-
-                    id:
-                        buildingId * 10000 +
-                        Number(number),
-
+                    id: buildingId * 10000 + Number(number),
                     buildingId,
-
                     buildingCode,
-
                     number,
-
                     floor,
 
-                    floorLabel:
-                        floor === 0
-                            ? 'Parter'
-                            : `${floor} piętro`,
+                    floorLabel: floor === 0 ? 'Parter' : `${floor} piętro`,
                 });
             }
         }

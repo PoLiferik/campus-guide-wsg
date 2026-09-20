@@ -1,93 +1,58 @@
+import { apiRequest } from './apiClient';
 import { userApi } from './userApi';
+import type { LoginDto } from '../types/dto/LoginDto';
+import type { User } from '../types/User';
 
-import type {
-    User,
-} from '../types/User';
+const SESSION_KEY = 'campus-guide-current-staff-user';
 
-const STORAGE_KEY =
-    'campus-guide-current-user-id';
+function saveSession(user: User) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+}
+
+function readSession(): User | null {
+    const saved = localStorage.getItem(SESSION_KEY);
+
+    if (!saved) return null;
+
+    try {
+        return JSON.parse(saved) as User;
+    } catch {
+        localStorage.removeItem(SESSION_KEY);
+        return null;
+    }
+}
 
 export const authApi = {
-    async login(
-        userId: number
-    ): Promise<User> {
-        const users =
-            await userApi.getAll();
+    async login(username: string, password: string): Promise<User> {
+        const payload: LoginDto = {
+            username: username.trim(),
+            password,
+        };
 
-        const user =
-            users.find(
-                (item) =>
-                    item.id === userId
-            );
+        await apiRequest<unknown>('/Moderators/login', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
 
-        if (
-            !user ||
-            !user.isActive
-        ) {
-            throw new Error(
-                'USER_NOT_AVAILABLE'
-            );
-        }
+        const user = await userApi.getByUsername(username.trim());
 
-        localStorage.setItem(
-            STORAGE_KEY,
-            String(user.id)
-        );
-
+        saveSession(user);
         return user;
     },
 
-    async getCurrentUser():
-        Promise<User | null> {
-
-        const savedId =
-            localStorage.getItem(
-                STORAGE_KEY
-            );
-
-        if (!savedId) {
-            return null;
+    async getCurrentUser(): Promise<User | null> {
+        const session = readSession();
+        if (!session) return null;
+        try {
+            const user = await userApi.getByUsername(session.email);
+            saveSession(user);
+            return user;
+        } catch {
+            return session;
         }
-
-        const userId =
-            Number(savedId);
-
-        if (
-            Number.isNaN(userId)
-        ) {
-            localStorage.removeItem(
-                STORAGE_KEY
-            );
-
-            return null;
-        }
-
-        const users =
-            await userApi.getAll();
-
-        const user =
-            users.find(
-                (item) =>
-                    item.id === userId
-            );
-
-        if (
-            !user ||
-            !user.isActive
-        ) {
-            localStorage.removeItem(
-                STORAGE_KEY
-            );
-
-            return null;
-        }
-
-        return user;
     },
 
-    async logout() {
-        localStorage.removeItem(
-            STORAGE_KEY
-        );
+    async logout(): Promise<void> {
+        localStorage.removeItem(SESSION_KEY);
     },
 };

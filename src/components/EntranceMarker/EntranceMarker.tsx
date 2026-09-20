@@ -1,6 +1,6 @@
-import { divIcon } from 'leaflet';
-import type { LatLngExpression } from 'leaflet';
-import { Marker, Tooltip } from 'react-leaflet';
+import {divIcon} from 'leaflet';
+import type {LatLngExpression} from 'leaflet';
+import {Marker, Tooltip} from 'react-leaflet';
 
 import type {
     Entrance,
@@ -28,16 +28,11 @@ function EntranceMarker({
                 : 'entrance-arrow--unknown';
 
     const recommendedClass =
-        isRecommended
-            ? 'entrance-arrow--recommended'
-            : '';
+        isRecommended ? 'entrance-arrow--recommended' : '';
 
-    const direction: EntranceDirection =
-        entrance.direction ?? 'right';
+    const direction: EntranceDirection = entrance.direction ?? 'right';
 
-    const icon = divIcon({
-        className: 'entrance-arrow-wrapper',
-        html: `
+    const icon = divIcon({className: 'entrance-arrow-wrapper', html: `
             <div class="
                 entrance-arrow
                 ${statusClass}
@@ -89,16 +84,16 @@ function EntranceMarker({
                         {entrance.code}
                     </strong>
 
-                    <br />
+                    <br/>
 
                     {entrance.description ??
                         'Wejście'}
 
-                    <br />
+                    <br/>
 
                     {getStatusText()}
 
-                    <br />
+                    <br/>
 
                     {getHoursText()}
                 </div>

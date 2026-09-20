@@ -1,11 +1,11 @@
-import type { User } from '../types/User';
+import type {User} from '../types/User';
 
 export const users: User[] = [
     {
         id: 1,
         name: 'Administrator',
         email: 'admin@wsg.pl',
-        role: 'admin',
+        role: 'Admin',
         isActive: true,
         assignedBuildingIds: [],
         createdAt: null,
@@ -15,7 +15,7 @@ export const users: User[] = [
         id: 2,
         name: 'Cezary Kowalski',
         email: 'cezary@wsg.pl',
-        role: 'lecturer',
+        role: 'Moderator',
         isActive: true,
         assignedBuildingIds: [2, 10],
         createdAt: null,

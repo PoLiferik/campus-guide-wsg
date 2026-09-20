@@ -1,25 +1,21 @@
 import { useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
 
 import CampusMap from '../components/CampusMap/CampusMap';
-import SearchBar from '../components/SearchBar/SearchBar';
-import SearchResults from '../components/SearchResults/SearchResults';
+
+import { buildings } from '../mocks/buildings';
 
 import { campusApi } from '../services/campusApi';
 import { entranceApi } from '../services/entranceApi';
 import { authApi } from '../services/authApi';
-
 import {
     getDemoRoomStatus,
     roomStatusApi,
 } from '../services/roomStatusApi';
 
-import { buildings } from '../mocks/buildings';
-
 import type { SearchResult } from '../types/Search';
-import type { RoomDetails } from '../types/Room';
 import type { Entrance } from '../types/Entrance';
 import type { User } from '../types/User';
-
 import type {
     RoomStatus,
     RoomStatusRecord,
@@ -27,1208 +23,666 @@ import type {
 
 import './CampusPage.css';
 
-interface FloorDefinition {
-    floor: number;
-    label: string;
-    start: number;
-}
-
-const FLOORS: FloorDefinition[] = [
-    {
-        floor: 0,
-        label: 'Parter',
-        start: 1,
-    },
-    {
-        floor: 1,
-        label: '1 piętro',
-        start: 101,
-    },
-    {
-        floor: 2,
-        label: '2 piętro',
-        start: 201,
-    },
-];
-
-function getRoomStatusText(status: RoomStatus) {
-    switch (status) {
-        case 'lecture':
-            return 'Trwa wykład';
-
-        case 'closed':
-            return 'Zamknięta';
-
-        case 'free':
-        default:
-            return 'Wolna';
-    }
-}
-
 function CampusPage() {
-    const [selectedBuildingId, setSelectedBuildingId] =
-        useState<number | null>(null);
+    const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
+    const [selectedRoom, setSelectedRoom] = useState<SearchResult | null>(null);
 
-    const [selectedResult, setSelectedResult] =
-        useState<SearchResult | null>(null);
+    const [buildingRooms, setBuildingRooms] = useState<SearchResult[]>([]);
+    const [allEntrances, setAllEntrances] = useState<Entrance[]>([]);
+    const [roomStatuses, setRoomStatuses] = useState<RoomStatusRecord[]>([]);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-    const [roomDetails, setRoomDetails] =
-        useState<RoomDetails | null>(null);
+    const [query, setQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [searchError, setSearchError] = useState<string | null>(null);
 
-    const [searchResults, setSearchResults] =
-        useState<SearchResult[]>([]);
+    const [roomsLoading, setRoomsLoading] = useState(false);
+    const [roomsError, setRoomsError] = useState<string | null>(null);
 
-    const [allEntrances, setAllEntrances] =
-        useState<Entrance[]>([]);
+    const [menuOpen, setMenuOpen] = useState(true);
+    const [openFloor, setOpenFloor] = useState<number | null>(null);
 
-    const [roomStatuses, setRoomStatuses] =
-        useState<RoomStatusRecord[]>([]);
-
-    const [currentUser, setCurrentUser] =
-        useState<User | null>(null);
-
-    const [openFloor, setOpenFloor] =
-        useState<number | null>(null);
-
-    const [menuVisible, setMenuVisible] =
-        useState(true);
-
-    const [lectureFormOpen, setLectureFormOpen] =
-        useState(false);
-
-    const [lectureTopic, setLectureTopic] =
-        useState('');
-
-    const [lectureStartTime, setLectureStartTime] =
-        useState('');
-
-    const [lectureEndTime, setLectureEndTime] =
-        useState('');
-
-    const [roomActionError, setRoomActionError] =
-        useState<string | null>(null);
-
-    const [changingRoom, setChangingRoom] =
-        useState(false);
-
-    const [loading, setLoading] =
-        useState(false);
-
-    const [error, setError] =
-        useState<string | null>(null);
-
-    const [searched, setSearched] =
-        useState(false);
+    const [lectureFormOpen, setLectureFormOpen] = useState(false);
+    const [lectureTopic, setLectureTopic] = useState('');
+    const [lectureStartTime, setLectureStartTime] = useState('');
+    const [lectureEndTime, setLectureEndTime] = useState('');
+    const [roomActionLoading, setRoomActionLoading] = useState(false);
+    const [roomActionError, setRoomActionError] = useState<string | null>(null);
 
     useEffect(() => {
-        async function loadData() {
-            try {
-                const [entrances, statuses, user] =
-                    await Promise.all([
-                        entranceApi.getAll(),
-                        roomStatusApi.getAll(),
-                        authApi.getCurrentUser(),
-                    ]);
+        entranceApi.getAll()
+            .then(setAllEntrances)
+            .catch(console.error);
 
-                setAllEntrances(entrances);
-                setRoomStatuses(statuses);
-                setCurrentUser(user);
-            } catch (error) {
-                console.error(
-                    'Nie udało się pobrać danych:',
-                    error
-                );
-            }
-        }
+        roomStatusApi.getAll()
+            .then(setRoomStatuses)
+            .catch(console.error);
 
-        void loadData();
+        authApi.getCurrentUser()
+            .then(setCurrentUser)
+            .catch(console.error);
     }, []);
 
-    const selectedBuilding =
-        selectedBuildingId === null
-            ? null
-            : buildings.find(
-            (building) =>
-                building.id ===
-                selectedBuildingId
-        ) ?? null;
+    useEffect(() => {
+        if (selectedBuildingId === null) return;
 
-    function resetLectureForm() {
+        let cancelled = false;
+
+        campusApi.getRoomsByBuilding(selectedBuildingId)
+            .then((rooms) => {
+                if (cancelled) return;
+
+                setBuildingRooms(rooms);
+                setRoomsError(null);
+
+                const firstFloor = rooms[0]?.floor ?? null;
+
+                setOpenFloor((current) => {
+                    if (current !== null && rooms.some((room) => room.floor === current)) {
+                        return current;
+                    }
+
+                    return firstFloor;
+                });
+
+                setSelectedRoom((current) => {
+                    if (!current) return null;
+
+                    return rooms.find((room) => room.id === current.id) ?? null;
+                });
+            })
+            .catch((error) => {
+                if (cancelled) return;
+
+                console.error(error);
+                setBuildingRooms([]);
+                setRoomsError('Nie udało się pobrać sal z bazy danych.');
+            })
+            .finally(() => {
+                if (!cancelled) setRoomsLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [selectedBuildingId]);
+
+    const selectedBuilding = buildings.find(
+        (building) => building.id === selectedBuildingId
+    );
+
+    const floors = Array.from(
+        new Set(
+            buildingRooms
+                .map((room) => room.floor)
+                .filter((floor): floor is number => floor !== undefined)
+        )
+    ).sort((a, b) => a - b);
+
+    const selectedStatusRecord = selectedRoom?.number && selectedBuildingId !== null
+        ? roomStatuses.find(
+            (record) =>
+                record.buildingId === selectedBuildingId &&
+                record.roomNumber === selectedRoom.number
+        )
+        : undefined;
+
+    const selectedRoomStatus = selectedRoom?.number
+        ? selectedStatusRecord?.status ?? getDemoRoomStatus(selectedRoom.number)
+        : null;
+
+    const activeLecture = selectedStatusRecord?.activeLecture ?? null;
+
+    const canEditSelectedBuilding = Boolean(
+        currentUser &&
+        selectedBuildingId !== null &&
+        (
+            currentUser.role === 'Admin' ||
+            (
+                currentUser.role === 'Moderator' &&
+                currentUser.assignedBuildingIds.includes(selectedBuildingId)
+            )
+        )
+    );
+
+    const canEndLecture = Boolean(
+        currentUser &&
+        activeLecture &&
+        (
+            currentUser.role === 'Admin' ||
+            activeLecture.lecturerId === currentUser.id
+        )
+    );
+
+    function handleBuildingSelect(id: number | null) {
+        setSelectedBuildingId(id);
+        setSelectedRoom(null);
+        setBuildingRooms([]);
+        setSearchResults([]);
+        setSearchError(null);
+        setRoomsError(null);
+        setRoomActionError(null);
+        setLectureFormOpen(false);
+
+        if (id !== null) setRoomsLoading(true);
+    }
+
+    function handleRoomSelect(room: SearchResult) {
+        setSelectedRoom(room);
+        setOpenFloor(room.floor ?? null);
+        setRoomActionError(null);
         setLectureFormOpen(false);
         setLectureTopic('');
         setLectureStartTime('');
         setLectureEndTime('');
+    }
+
+    async function handleSearch(event: FormEvent) {
+        event.preventDefault();
+
+        const value = query.trim();
+
+        if (!value) {
+            setSearchResults([]);
+            setSearchError(null);
+            return;
+        }
+
+        try {
+            setSearchLoading(true);
+            setSearchError(null);
+
+            const response = await campusApi.search(value);
+
+            if (response.items.length === 0) {
+                setSearchResults([]);
+                setSearchError('Nie znaleziono sali lub budynku.');
+                return;
+            }
+
+            if (response.items.length === 1) {
+                selectSearchResult(response.items[0]);
+                return;
+            }
+
+            setSearchResults(response.items);
+        } catch (error) {
+            console.error(error);
+            setSearchResults([]);
+            setSearchError('Nie można pobrać danych. Spróbuj ponownie.');
+        } finally {
+            setSearchLoading(false);
+        }
+    }
+
+    function selectSearchResult(result: SearchResult) {
+        setSearchResults([]);
+        setSearchError(null);
+        setRoomsError(null);
+
+        if (result.type === 'building') {
+            handleBuildingSelect(result.buildingId);
+            return;
+        }
+
+        setSelectedBuildingId(result.buildingId);
+        setSelectedRoom(result);
+        setRoomsLoading(true);
+        setOpenFloor(result.floor ?? null);
+        setLectureFormOpen(false);
         setRoomActionError(null);
     }
 
-    function canManageBuilding(buildingId: number) {
-        if (!currentUser) {
-            return false;
-        }
+    function getRoomStatus(room: SearchResult): RoomStatus {
+        if (!room.number) return 'free';
 
-        if (currentUser.role === 'admin') {
-            return true;
-        }
-
-        return (
-            currentUser.role === 'lecturer' &&
-            currentUser.assignedBuildingIds.includes(
-                buildingId
-            )
-        );
-    }
-
-    function getRoomRecord(
-        buildingId: number,
-        roomNumber: string
-    ) {
-        return roomStatuses.find(
+        const record = roomStatuses.find(
             (item) =>
-                item.buildingId === buildingId &&
-                item.roomNumber === roomNumber
+                item.buildingId === room.buildingId &&
+                item.roomNumber === room.number
         );
+
+        return record?.status ?? getDemoRoomStatus(room.number);
     }
 
-    function getRoomStatus(
-        buildingId: number,
-        roomNumber: string
-    ): RoomStatus {
-        return (
-            getRoomRecord(
-                buildingId,
-                roomNumber
-            )?.status ??
-            getDemoRoomStatus(roomNumber)
-        );
+    function getStatusLabel(status: RoomStatus) {
+        if (status === 'lecture') return 'Trwa wykład';
+        if (status === 'closed') return 'Zamknięta';
+
+        return 'Wolna';
     }
 
-    function updateRoomRecord(
-        updated: RoomStatusRecord
-    ) {
-        setRoomStatuses((current) => {
-            const exists =
-                current.some(
-                    (item) =>
-                        item.buildingId ===
-                        updated.buildingId &&
-                        item.roomNumber ===
-                        updated.roomNumber
-                );
-
-            if (!exists) {
-                return [
-                    ...current,
-                    updated,
-                ];
-            }
-
-            return current.map(
-                (item) =>
-                    item.buildingId ===
-                    updated.buildingId &&
-                    item.roomNumber ===
-                    updated.roomNumber
-                        ? updated
-                        : item
-            );
-        });
+    async function reloadStatuses() {
+        setRoomStatuses(await roomStatusApi.getAll());
     }
 
-    async function handleSearch(query: string) {
+    async function changeRoomStatus(status: 'free' | 'closed') {
+        if (!currentUser || !selectedRoom?.number || selectedBuildingId === null) return;
+
         try {
-            setLoading(true);
-            setError(null);
-            setSearched(false);
+            setRoomActionLoading(true);
+            setRoomActionError(null);
 
-            setSelectedBuildingId(null);
-            setSelectedResult(null);
-            setRoomDetails(null);
-            setSearchResults([]);
-            setOpenFloor(null);
-
-            resetLectureForm();
-
-            const response =
-                await campusApi.search(query);
-
-            setSearchResults(
-                response.items
+            await roomStatusApi.setStatus(
+                selectedBuildingId,
+                selectedRoom.number,
+                status,
+                currentUser.name,
+                currentUser.id,
+                currentUser.role === 'Admin'
             );
 
-            setSearched(true);
+            await reloadStatuses();
+            setLectureFormOpen(false);
         } catch (error) {
             console.error(error);
-
-            setSearchResults([]);
-            setSearched(true);
-
-            setError(
-                'Nie można pobrać danych. Spróbuj ponownie.'
-            );
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    async function handleResultSelect(
-        result: SearchResult
-    ) {
-        setSelectedBuildingId(
-            result.buildingId
-        );
-
-        setSelectedResult(result);
-
-        setSearchResults([]);
-        setSearched(false);
-        setRoomDetails(null);
-
-        resetLectureForm();
-
-        if (
-            result.type === 'room' &&
-            result.floor !== undefined
-        ) {
-            setOpenFloor(
-                result.floor
-            );
-        }
-
-        if (result.type === 'room') {
-            try {
-                const details =
-                    await campusApi.getRoom(
-                        result.id
-                    );
-
-                setRoomDetails(details);
-            } catch (error) {
-                console.error(error);
-            }
-        }
-    }
-
-    function handleBuildingSelect(
-        buildingId: number | null
-    ) {
-        setRoomDetails(null);
-        setSearchResults([]);
-        setSearched(false);
-        setOpenFloor(null);
-
-        resetLectureForm();
-
-        if (buildingId === null) {
-            setSelectedBuildingId(null);
-            setSelectedResult(null);
-            return;
-        }
-
-        const building =
-            buildings.find(
-                (item) =>
-                    item.id === buildingId
-            );
-
-        if (!building) {
-            return;
-        }
-
-        setSelectedBuildingId(
-            building.id
-        );
-
-        setSelectedResult({
-            type: 'building',
-            id: building.id,
-            buildingId: building.id,
-            buildingCode:
-            building.code,
-        });
-    }
-
-    function handleFloorToggle(
-        floor: number
-    ) {
-        setOpenFloor(
-            (current) =>
-                current === floor
-                    ? null
-                    : floor
-        );
-    }
-
-    function handleRoomSelect(
-        floorDefinition: FloorDefinition,
-        index: number
-    ) {
-        if (!selectedBuilding) {
-            return;
-        }
-
-        const roomNumber =
-            String(
-                floorDefinition.start +
-                index
-            ).padStart(3, '0');
-
-        const roomId =
-            selectedBuilding.id *
-            10000 +
-            Number(roomNumber);
-
-        const result: SearchResult = {
-            type: 'room',
-            id: roomId,
-
-            buildingId:
-            selectedBuilding.id,
-
-            buildingCode:
-            selectedBuilding.code,
-
-            number:
-            roomNumber,
-
-            floor:
-            floorDefinition.floor,
-
-            floorLabel:
-            floorDefinition.label,
-
-            isDemo: true,
-        };
-
-        void handleResultSelect(result);
-    }
-
-    async function handleSimpleStatus(
-        roomNumber: string,
-        status: 'free' | 'closed'
-    ) {
-        if (
-            !selectedBuilding ||
-            !currentUser
-        ) {
-            return;
-        }
-
-        try {
-            setChangingRoom(true);
-            setRoomActionError(null);
-
-            const updated =
-                await roomStatusApi.setStatus(
-                    selectedBuilding.id,
-                    roomNumber,
-                    status,
-                    currentUser.name,
-                    currentUser.id,
-                    currentUser.role ===
-                    'admin'
-                );
-
-            updateRoomRecord(updated);
-            resetLectureForm();
-        } catch (error) {
-            if (
-                error instanceof Error &&
-                error.message ===
-                'ROOM_OCCUPIED'
-            ) {
-                setRoomActionError(
-                    'Ta sala jest obecnie zajęta przez innego prowadzącego.'
-                );
-            } else {
-                console.error(error);
-
-                setRoomActionError(
-                    'Nie udało się zmienić statusu sali.'
-                );
-            }
-        } finally {
-            setChangingRoom(false);
-        }
-    }
-
-    async function handleStartLecture(
-        roomNumber: string
-    ) {
-        if (
-            !selectedBuilding ||
-            !currentUser ||
-            currentUser.role !==
-            'lecturer'
-        ) {
-            return;
-        }
-
-        if (
-            !lectureStartTime ||
-            !lectureEndTime
-        ) {
             setRoomActionError(
-                'Podaj godzinę rozpoczęcia i zakończenia zajęć.'
+                error instanceof Error ? error.message : 'Nie udało się zmienić statusu sali.'
             );
+        } finally {
+            setRoomActionLoading(false);
+        }
+    }
 
+    async function startLecture(event: FormEvent) {
+        event.preventDefault();
+
+        if (!currentUser || !selectedRoom?.number || selectedBuildingId === null) return;
+
+        if (!lectureStartTime || !lectureEndTime) {
+            setRoomActionError('Podaj godzinę rozpoczęcia i zakończenia.');
             return;
         }
 
-        if (
-            lectureStartTime >=
-            lectureEndTime
-        ) {
+        if (lectureEndTime <= lectureStartTime) {
+            setRoomActionError('Godzina zakończenia musi być późniejsza niż rozpoczęcia.');
+            return;
+        }
+
+        try {
+            setRoomActionLoading(true);
+            setRoomActionError(null);
+
+            await roomStatusApi.startLecture(
+                selectedBuildingId,
+                selectedRoom.number,
+                currentUser.id,
+                currentUser.name,
+                lectureTopic.trim(),
+                lectureStartTime,
+                lectureEndTime
+            );
+
+            await reloadStatuses();
+
+            setLectureFormOpen(false);
+            setLectureTopic('');
+            setLectureStartTime('');
+            setLectureEndTime('');
+        } catch (error) {
+            console.error(error);
             setRoomActionError(
-                'Godzina zakończenia musi być późniejsza niż godzina rozpoczęcia.'
+                error instanceof Error ? error.message : 'Nie udało się rozpocząć wykładu.'
+            );
+        } finally {
+            setRoomActionLoading(false);
+        }
+    }
+
+    async function endLecture() {
+        if (!currentUser || !selectedRoom?.number || selectedBuildingId === null) return;
+
+        try {
+            setRoomActionLoading(true);
+            setRoomActionError(null);
+
+            await roomStatusApi.endLecture(
+                selectedBuildingId,
+                selectedRoom.number,
+                currentUser.id,
+                currentUser.name,
+                currentUser.role === 'Admin'
             );
 
-            return;
-        }
-
-        try {
-            setChangingRoom(true);
-            setRoomActionError(null);
-
-            const updated =
-                await roomStatusApi.startLecture(
-                    selectedBuilding.id,
-                    roomNumber,
-                    currentUser.id,
-                    currentUser.name,
-                    lectureTopic,
-                    lectureStartTime,
-                    lectureEndTime
-                );
-
-            updateRoomRecord(updated);
-            resetLectureForm();
+            await reloadStatuses();
         } catch (error) {
-            if (
-                error instanceof Error &&
-                error.message ===
-                'ROOM_OCCUPIED'
-            ) {
-                setRoomActionError(
-                    'Inny wykładowca prowadzi już zajęcia w tej sali.'
-                );
-            } else if (
-                error instanceof Error &&
-                error.message ===
-                'LECTURE_TIME_REQUIRED'
-            ) {
-                setRoomActionError(
-                    'Podaj godzinę rozpoczęcia i zakończenia.'
-                );
-            } else if (
-                error instanceof Error &&
-                error.message ===
-                'INVALID_LECTURE_TIME'
-            ) {
-                setRoomActionError(
-                    'Nieprawidłowy zakres godzin.'
-                );
-            } else {
-                console.error(error);
-
-                setRoomActionError(
-                    'Nie udało się rozpocząć zajęć.'
-                );
-            }
+            console.error(error);
+            setRoomActionError(
+                error instanceof Error ? error.message : 'Nie udało się zakończyć wykładu.'
+            );
         } finally {
-            setChangingRoom(false);
+            setRoomActionLoading(false);
         }
-    }
-
-    async function handleEndLecture(
-        roomNumber: string
-    ) {
-        if (
-            !selectedBuilding ||
-            !currentUser
-        ) {
-            return;
-        }
-
-        try {
-            setChangingRoom(true);
-            setRoomActionError(null);
-
-            const updated =
-                await roomStatusApi.endLecture(
-                    selectedBuilding.id,
-                    roomNumber,
-                    currentUser.id,
-                    currentUser.name,
-                    currentUser.role ===
-                    'admin'
-                );
-
-            updateRoomRecord(updated);
-            resetLectureForm();
-        } catch (error) {
-            if (
-                error instanceof Error &&
-                error.message ===
-                'NOT_LECTURE_OWNER'
-            ) {
-                setRoomActionError(
-                    'Tylko prowadzący lub administrator może zakończyć te zajęcia.'
-                );
-            } else {
-                console.error(error);
-
-                setRoomActionError(
-                    'Nie udało się zakończyć zajęć.'
-                );
-            }
-        } finally {
-            setChangingRoom(false);
-        }
-    }
-
-    function closeRoomInfo() {
-        if (!selectedBuilding) {
-            return;
-        }
-
-        setSelectedResult({
-            type: 'building',
-            id: selectedBuilding.id,
-
-            buildingId:
-            selectedBuilding.id,
-
-            buildingCode:
-            selectedBuilding.code,
-        });
-
-        setRoomDetails(null);
-        resetLectureForm();
     }
 
     return (
         <main className="campus-page">
             <CampusMap
-                selectedBuildingId={
-                    selectedBuildingId
-                }
-                recommendedEntranceId={
-                    roomDetails
-                        ?.recommendedEntranceId ??
-                    null
-                }
-                entrances={
-                    allEntrances
-                }
-                onBuildingSelect={
-                    handleBuildingSelect
-                }
+                selectedBuildingId={selectedBuildingId}
+                recommendedEntranceId={null}
+                entrances={allEntrances}
+                onBuildingSelect={handleBuildingSelect}
             />
 
-            {!menuVisible && (
+            {!menuOpen && (
                 <button
                     type="button"
-                    className="campus-menu-toggle"
-                    onClick={() =>
-                        setMenuVisible(true)
-                    }
+                    className="campus-panel-toggle"
+                    onClick={() => setMenuOpen(true)}
                 >
                     ☰
                 </button>
             )}
 
-            {menuVisible && (
-                <aside className="campus-menu">
-                    <div className="campus-menu__header">
+            {menuOpen && (
+                <aside className="campus-panel">
+                    <header className="campus-panel__header">
                         <div>
-                            <span className="campus-menu__logo">
-                                WSG
-                            </span>
-
-                            <h1>
-                                Campus Guide
-                            </h1>
+                            <span>WSG</span>
+                            <h1>Campus Guide</h1>
                         </div>
 
-                        <div className="campus-menu__header-actions">
+                        <div className="campus-panel__header-actions">
                             {selectedBuilding && (
-                                <span className="campus-menu__building-code">
-                                    {
-                                        selectedBuilding.code
-                                    }
+                                <span className="campus-building-badge">
+                                    {selectedBuilding.code}
                                 </span>
                             )}
 
                             <button
                                 type="button"
-                                className="campus-menu__hide"
-                                onClick={() =>
-                                    setMenuVisible(
-                                        false
-                                    )
-                                }
+                                className="campus-panel__hide"
+                                onClick={() => setMenuOpen(false)}
                             >
                                 —
                             </button>
                         </div>
-                    </div>
+                    </header>
 
-                    <SearchBar
-                        onSearch={
-                            handleSearch
-                        }
-                    />
+                    <form className="campus-search" onSubmit={handleSearch}>
+                        <input
+                            value={query}
+                            placeholder="Wpisz budynek lub numer sali"
+                            onChange={(event) => setQuery(event.target.value)}
+                        />
 
-                    <SearchResults
-                        results={
-                            searchResults
-                        }
-                        loading={
-                            loading
-                        }
-                        error={
-                            error
-                        }
-                        searched={
-                            searched
-                        }
-                        onSelect={
-                            handleResultSelect
-                        }
-                    />
+                        <button type="submit" disabled={searchLoading}>
+                            {searchLoading ? '...' : 'Szukaj'}
+                        </button>
+                    </form>
+
+                    {searchError && (
+                        <div className="campus-message campus-message--error">
+                            {searchError}
+                        </div>
+                    )}
+
+                    {searchResults.length > 0 && (
+                        <div className="campus-search-results">
+                            {searchResults.map((result) => (
+                                <button
+                                    key={`${result.type}-${result.id}`}
+                                    type="button"
+                                    onClick={() => selectSearchResult(result)}
+                                >
+                                    {result.type === 'building' ? (
+                                        <>
+                                            <strong>Budynek {result.buildingCode}</strong>
+                                            <span>Budynek</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <strong>
+                                                {result.buildingCode} {result.number}
+                                            </strong>
+                                            <span>{result.floorLabel}</span>
+                                        </>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    )}
 
                     {selectedBuilding && (
-                        <div className="campus-building-panel">
-                            <div className="campus-building-panel__top">
+                        <>
+                            <div className="campus-selected-building">
                                 <div>
-                                    <span>
-                                        Wybrany budynek
-                                    </span>
-
-                                    <strong>
-                                        Budynek{' '}
-                                        {
-                                            selectedBuilding.code
-                                        }
-                                    </strong>
+                                    <span>Wybrany budynek</span>
+                                    <strong>Budynek {selectedBuilding.code}</strong>
                                 </div>
 
                                 <button
                                     type="button"
-                                    onClick={() =>
-                                        handleBuildingSelect(
-                                            null
-                                        )
-                                    }
+                                    onClick={() => handleBuildingSelect(null)}
                                 >
                                     ×
                                 </button>
                             </div>
 
-                            <div className="room-status-legend">
-                                <span>
-                                    <i className="room-status-dot room-status-dot--free" />
-                                    Wolna
-                                </span>
-
-                                <span>
-                                    <i className="room-status-dot room-status-dot--lecture" />
-                                    Trwa wykład
-                                </span>
-
-                                <span>
-                                    <i className="room-status-dot room-status-dot--closed" />
-                                    Zamknięta
-                                </span>
+                            <div className="campus-legend">
+                                <span><i className="campus-dot campus-dot--free" /> Wolna</span>
+                                <span><i className="campus-dot campus-dot--lecture" /> Trwa wykład</span>
+                                <span><i className="campus-dot campus-dot--closed" /> Zamknięta</span>
                             </div>
 
-                            <div className="floor-accordion">
-                                {FLOORS.map(
-                                    (
-                                        floorDefinition
-                                    ) => {
-                                        const isOpen =
-                                            openFloor ===
-                                            floorDefinition.floor;
+                            {roomsLoading && (
+                                <div className="campus-message">
+                                    Ładowanie sal...
+                                </div>
+                            )}
 
-                                        const selectedRoomOnFloor =
-                                            selectedResult?.type ===
-                                            'room' &&
-                                            selectedResult.floor ===
-                                            floorDefinition.floor;
+                            {roomsError && (
+                                <div className="campus-message campus-message--error">
+                                    {roomsError}
+                                </div>
+                            )}
 
-                                        return (
-                                            <div
-                                                key={
-                                                    floorDefinition.floor
-                                                }
-                                                className={
-                                                    isOpen
-                                                        ? 'floor-accordion__item floor-accordion__item--open'
-                                                        : 'floor-accordion__item'
-                                                }
-                                            >
-                                                <button
-                                                    type="button"
-                                                    className="floor-accordion__button"
-                                                    onClick={() =>
-                                                        handleFloorToggle(
-                                                            floorDefinition.floor
-                                                        )
-                                                    }
-                                                >
-                                                    <div className="floor-accordion__floor">
-                                                        {floorDefinition.floor ===
-                                                        0
-                                                            ? 'P'
-                                                            : floorDefinition.floor}
-                                                    </div>
+                            {!roomsLoading && !roomsError && buildingRooms.length === 0 && (
+                                <div className="campus-message">
+                                    Brak sal w tym budynku.
+                                </div>
+                            )}
 
-                                                    <div className="floor-accordion__label">
-                                                        <strong>
-                                                            {
-                                                                floorDefinition.label
-                                                            }
-                                                        </strong>
+                            {!roomsLoading && floors.map((floor) => {
+                                const floorRooms = buildingRooms.filter(
+                                    (room) => room.floor === floor
+                                );
 
-                                                        <span>
-                                                            {floorDefinition.floor ===
-                                                            0
-                                                                ? '001–008'
-                                                                : floorDefinition.floor ===
-                                                                1
-                                                                    ? '101–108'
-                                                                    : '201–208'}
-                                                        </span>
-                                                    </div>
+                                const floorLabel = floor === 0 ? 'Parter' : `${floor} piętro`;
+                                const isOpen = openFloor === floor;
 
-                                                    <span className="floor-accordion__arrow">
-                                                        ›
-                                                    </span>
-                                                </button>
+                                return (
+                                    <section className="campus-floor" key={floor}>
+                                        <button
+                                            type="button"
+                                            className="campus-floor__header"
+                                            onClick={() => setOpenFloor(isOpen ? null : floor)}
+                                        >
+                                            <div>
+                                                <span className="campus-floor__icon">
+                                                    {floor === 0 ? 'P' : floor}
+                                                </span>
 
-                                                <div className="floor-accordion__content">
-                                                    <div className="floor-accordion__inner">
-                                                        <div className="room-grid">
-                                                            {Array.from(
-                                                                {
-                                                                    length: 8,
-                                                                },
-                                                                (
-                                                                    _,
-                                                                    index
-                                                                ) => {
-                                                                    const roomNumber =
-                                                                        String(
-                                                                            floorDefinition.start +
-                                                                            index
-                                                                        ).padStart(
-                                                                            3,
-                                                                            '0'
-                                                                        );
+                                                <div>
+                                                    <strong>{floorLabel}</strong>
+                                                    <small>
+                                                        {floorRooms[0]?.number}–{floorRooms[floorRooms.length - 1]?.number}
+                                                    </small>
+                                                </div>
+                                            </div>
 
-                                                                    const status =
-                                                                        getRoomStatus(
-                                                                            selectedBuilding.id,
-                                                                            roomNumber
-                                                                        );
+                                            <span>{isOpen ? '⌃' : '⌄'}</span>
+                                        </button>
 
-                                                                    const isSelected =
-                                                                        selectedResult?.type ===
-                                                                        'room' &&
-                                                                        selectedResult.number ===
-                                                                        roomNumber &&
-                                                                        selectedResult.buildingId ===
-                                                                        selectedBuilding.id;
+                                        {isOpen && (
+                                            <div className="campus-floor__content">
+                                                <div className="campus-room-grid">
+                                                    {floorRooms.map((room) => {
+                                                        const status = getRoomStatus(room);
+                                                        const selected = selectedRoom?.id === room.id;
 
-                                                                    return (
-                                                                        <button
-                                                                            key={
-                                                                                roomNumber
-                                                                            }
-                                                                            type="button"
-                                                                            className={[
-                                                                                'room-button',
-                                                                                `room-button--${status}`,
-                                                                                isSelected
-                                                                                    ? 'room-button--selected'
-                                                                                    : '',
-                                                                            ]
-                                                                                .filter(
-                                                                                    Boolean
-                                                                                )
-                                                                                .join(
-                                                                                    ' '
-                                                                                )}
-                                                                            onClick={() =>
-                                                                                handleRoomSelect(
-                                                                                    floorDefinition,
-                                                                                    index
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            <span>
-                                                                                {
-                                                                                    roomNumber
-                                                                                }
-                                                                            </span>
+                                                        return (
+                                                            <button
+                                                                key={room.id}
+                                                                type="button"
+                                                                className={`campus-room campus-room--${status} ${
+                                                                    selected ? 'campus-room--selected' : ''
+                                                                }`}
+                                                                onClick={() => handleRoomSelect(room)}
+                                                            >
+                                                                <span>{room.number}</span>
+                                                                <i />
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
 
-                                                                            <span
-                                                                                className={`room-button__dot room-button__dot--${status}`}
-                                                                            />
-                                                                        </button>
-                                                                    );
-                                                                }
+                                                {selectedRoom?.floor === floor && selectedRoom.number && (
+                                                    <div className="campus-room-details">
+                                                        <div className="campus-room-details__header">
+                                                            <div>
+                                                                <span>Sala</span>
+                                                                <strong>
+                                                                    {selectedBuilding.code} {selectedRoom.number}
+                                                                </strong>
+                                                            </div>
+
+                                                            {selectedRoomStatus && (
+                                                                <span
+                                                                    className={`campus-room-status campus-room-status--${selectedRoomStatus}`}
+                                                                >
+                                                                    {getStatusLabel(selectedRoomStatus)}
+                                                                </span>
                                                             )}
                                                         </div>
 
-                                                        {selectedRoomOnFloor &&
-                                                            selectedResult.number &&
-                                                            (() => {
-                                                                const roomNumber =
-                                                                    selectedResult.number;
+                                                        {activeLecture && (
+                                                            <div className="campus-active-lecture">
+                                                                <strong>{activeLecture.lecturerName}</strong>
 
-                                                                const roomStatus =
-                                                                    getRoomStatus(
-                                                                        selectedBuilding.id,
-                                                                        roomNumber
-                                                                    );
+                                                                {activeLecture.topic && (
+                                                                    <span>{activeLecture.topic}</span>
+                                                                )}
 
-                                                                const roomRecord =
-                                                                    getRoomRecord(
-                                                                        selectedBuilding.id,
-                                                                        roomNumber
-                                                                    );
+                                                                <small>
+                                                                    {activeLecture.startTime} – {activeLecture.endTime}
+                                                                </small>
+                                                            </div>
+                                                        )}
 
-                                                                const activeLecture =
-                                                                    roomRecord?.activeLecture ??
-                                                                    null;
+                                                        {canEditSelectedBuilding && currentUser && (
+                                                            <div className="room-manager">
+                                                                <div className="room-manager__buttons">
+                                                                    <button
+                                                                        type="button"
+                                                                        disabled={roomActionLoading}
+                                                                        onClick={() => void changeRoomStatus('free')}
+                                                                    >
+                                                                        Wolna
+                                                                    </button>
 
-                                                                const canManage =
-                                                                    canManageBuilding(
-                                                                        selectedBuilding.id
-                                                                    );
+                                                                    {!activeLecture && (
+                                                                        <button
+                                                                            type="button"
+                                                                            disabled={roomActionLoading}
+                                                                            onClick={() => {
+                                                                                setLectureFormOpen((value) => !value);
+                                                                                setRoomActionError(null);
+                                                                            }}
+                                                                        >
+                                                                            Wykład
+                                                                        </button>
+                                                                    )}
 
-                                                                const isOwnLecture =
-                                                                    activeLecture?.lecturerId ===
-                                                                    currentUser?.id;
+                                                                    <button
+                                                                        type="button"
+                                                                        disabled={roomActionLoading}
+                                                                        onClick={() => void changeRoomStatus('closed')}
+                                                                    >
+                                                                        Zamknij
+                                                                    </button>
+                                                                </div>
 
-                                                                const canEndLecture =
-                                                                    Boolean(
-                                                                        activeLecture &&
-                                                                        currentUser &&
-                                                                        (isOwnLecture ||
-                                                                            currentUser.role ===
-                                                                            'admin')
-                                                                    );
+                                                                {lectureFormOpen && !activeLecture && (
+                                                                    <form
+                                                                        className="room-manager__lecture"
+                                                                        onSubmit={startLecture}
+                                                                    >
+                                                                        <input
+                                                                            value={lectureTopic}
+                                                                            placeholder="Temat wykładu"
+                                                                            onChange={(event) =>
+                                                                                setLectureTopic(event.target.value)
+                                                                            }
+                                                                        />
 
-                                                                return (
-                                                                    <div className="inline-room-info">
-                                                                        <div className="inline-room-info__header">
-                                                                            <div>
-                                                                                <span>
-                                                                                    Wybrana sala
-                                                                                </span>
-
-                                                                                <strong>
-                                                                                    Sala{' '}
-                                                                                    {
-                                                                                        roomNumber
+                                                                        <div>
+                                                                            <label>
+                                                                                Od
+                                                                                <input
+                                                                                    type="time"
+                                                                                    value={lectureStartTime}
+                                                                                    required
+                                                                                    onChange={(event) =>
+                                                                                        setLectureStartTime(event.target.value)
                                                                                     }
-                                                                                </strong>
-                                                                            </div>
+                                                                                />
+                                                                            </label>
 
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={
-                                                                                    closeRoomInfo
-                                                                                }
-                                                                            >
-                                                                                ×
-                                                                            </button>
+                                                                            <label>
+                                                                                Do
+                                                                                <input
+                                                                                    type="time"
+                                                                                    value={lectureEndTime}
+                                                                                    required
+                                                                                    onChange={(event) =>
+                                                                                        setLectureEndTime(event.target.value)
+                                                                                    }
+                                                                                />
+                                                                            </label>
                                                                         </div>
 
-                                                                        <div className="inline-room-info__meta">
-                                                                            <span>
-                                                                                Budynek{' '}
-                                                                                {
-                                                                                    selectedBuilding.code
-                                                                                }
-                                                                            </span>
+                                                                        <button
+                                                                            type="submit"
+                                                                            disabled={roomActionLoading}
+                                                                        >
+                                                                            Rozpocznij wykład
+                                                                        </button>
+                                                                    </form>
+                                                                )}
 
-                                                                            <span>
-                                                                                {
-                                                                                    floorDefinition.label
-                                                                                }
-                                                                            </span>
+                                                                {activeLecture && canEndLecture && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="room-manager__end"
+                                                                        disabled={roomActionLoading}
+                                                                        onClick={() => void endLecture()}
+                                                                    >
+                                                                        Zakończ wykład
+                                                                    </button>
+                                                                )}
 
-                                                                            <span
-                                                                                className={`inline-room-status inline-room-status--${roomStatus}`}
-                                                                            >
-                                                                                {getRoomStatusText(
-                                                                                    roomStatus
-                                                                                )}
-                                                                            </span>
-                                                                        </div>
-
-                                                                        {activeLecture && (
-                                                                            <div className="active-lecture">
-                                                                                <div className="active-lecture__icon">
-                                                                                    ●
-                                                                                </div>
-
-                                                                                <div className="active-lecture__content">
-                                                                                    <span>
-                                                                                        Trwa wykład
-                                                                                    </span>
-
-                                                                                    <strong>
-                                                                                        {
-                                                                                            activeLecture.lecturerName
-                                                                                        }
-                                                                                    </strong>
-
-                                                                                    {activeLecture.topic && (
-                                                                                        <small>
-                                                                                            {
-                                                                                                activeLecture.topic
-                                                                                            }
-                                                                                        </small>
-                                                                                    )}
-
-                                                                                    <small className="active-lecture__time">
-                                                                                        🕒{' '}
-                                                                                        {
-                                                                                            activeLecture.startTime
-                                                                                        }
-                                                                                        {' – '}
-                                                                                        {
-                                                                                            activeLecture.endTime
-                                                                                        }
-                                                                                    </small>
-                                                                                </div>
-
-                                                                                {canEndLecture && (
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        disabled={
-                                                                                            changingRoom
-                                                                                        }
-                                                                                        onClick={() =>
-                                                                                            void handleEndLecture(
-                                                                                                roomNumber
-                                                                                            )
-                                                                                        }
-                                                                                    >
-                                                                                        Zakończ
-                                                                                    </button>
-                                                                                )}
-                                                                            </div>
-                                                                        )}
-
-                                                                        {canManage &&
-                                                                            !activeLecture && (
-                                                                                <div className="room-manager">
-                                                                                    <div className="room-manager__header">
-                                                                                        <span>
-                                                                                            Zarządzanie salą
-                                                                                        </span>
-
-                                                                                        <small>
-                                                                                            Status zapisuje się automatycznie
-                                                                                        </small>
-                                                                                    </div>
-
-                                                                                    <div className="room-manager__buttons">
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            className={
-                                                                                                roomStatus ===
-                                                                                                'free'
-                                                                                                    ? 'room-manager__button room-manager__button--free room-manager__button--active'
-                                                                                                    : 'room-manager__button room-manager__button--free'
-                                                                                            }
-                                                                                            disabled={
-                                                                                                changingRoom
-                                                                                            }
-                                                                                            onClick={() =>
-                                                                                                void handleSimpleStatus(
-                                                                                                    roomNumber,
-                                                                                                    'free'
-                                                                                                )
-                                                                                            }
-                                                                                        >
-                                                                                            ● Wolna
-                                                                                        </button>
-
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            className={
-                                                                                                lectureFormOpen
-                                                                                                    ? 'room-manager__button room-manager__button--lecture room-manager__button--active'
-                                                                                                    : 'room-manager__button room-manager__button--lecture'
-                                                                                            }
-                                                                                            disabled={
-                                                                                                changingRoom ||
-                                                                                                currentUser?.role !==
-                                                                                                'lecturer'
-                                                                                            }
-                                                                                            onClick={() => {
-                                                                                                setLectureFormOpen(
-                                                                                                    true
-                                                                                                );
-
-                                                                                                setRoomActionError(
-                                                                                                    null
-                                                                                                );
-                                                                                            }}
-                                                                                        >
-                                                                                            ● Wykład
-                                                                                        </button>
-
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            className={
-                                                                                                roomStatus ===
-                                                                                                'closed'
-                                                                                                    ? 'room-manager__button room-manager__button--closed room-manager__button--active'
-                                                                                                    : 'room-manager__button room-manager__button--closed'
-                                                                                            }
-                                                                                            disabled={
-                                                                                                changingRoom
-                                                                                            }
-                                                                                            onClick={() =>
-                                                                                                void handleSimpleStatus(
-                                                                                                    roomNumber,
-                                                                                                    'closed'
-                                                                                                )
-                                                                                            }
-                                                                                        >
-                                                                                            ● Zamknij
-                                                                                        </button>
-                                                                                    </div>
-
-                                                                                    {lectureFormOpen &&
-                                                                                        currentUser?.role ===
-                                                                                        'lecturer' && (
-                                                                                            <div className="lecture-form">
-                                                                                                <label>
-                                                                                                    Temat zajęć
-
-                                                                                                    <input
-                                                                                                        type="text"
-                                                                                                        value={
-                                                                                                            lectureTopic
-                                                                                                        }
-                                                                                                        placeholder="np. Programowanie obiektowe"
-                                                                                                        onChange={(
-                                                                                                            event
-                                                                                                        ) =>
-                                                                                                            setLectureTopic(
-                                                                                                                event
-                                                                                                                    .target
-                                                                                                                    .value
-                                                                                                            )
-                                                                                                        }
-                                                                                                    />
-                                                                                                </label>
-
-                                                                                                <div className="lecture-form__times">
-                                                                                                    <label>
-                                                                                                        Od
-
-                                                                                                        <input
-                                                                                                            type="time"
-                                                                                                            value={
-                                                                                                                lectureStartTime
-                                                                                                            }
-                                                                                                            onChange={(
-                                                                                                                event
-                                                                                                            ) =>
-                                                                                                                setLectureStartTime(
-                                                                                                                    event
-                                                                                                                        .target
-                                                                                                                        .value
-                                                                                                                )
-                                                                                                            }
-                                                                                                        />
-                                                                                                    </label>
-
-                                                                                                    <label>
-                                                                                                        Do
-
-                                                                                                        <input
-                                                                                                            type="time"
-                                                                                                            value={
-                                                                                                                lectureEndTime
-                                                                                                            }
-                                                                                                            onChange={(
-                                                                                                                event
-                                                                                                            ) =>
-                                                                                                                setLectureEndTime(
-                                                                                                                    event
-                                                                                                                        .target
-                                                                                                                        .value
-                                                                                                                )
-                                                                                                            }
-                                                                                                        />
-                                                                                                    </label>
-                                                                                                </div>
-
-                                                                                                <div className="lecture-form__teacher">
-                                                                                                    Prowadzący:{' '}
-
-                                                                                                    <strong>
-                                                                                                        {
-                                                                                                            currentUser.name
-                                                                                                        }
-                                                                                                    </strong>
-                                                                                                </div>
-
-                                                                                                <button
-                                                                                                    type="button"
-                                                                                                    className="lecture-form__start"
-                                                                                                    disabled={
-                                                                                                        changingRoom
-                                                                                                    }
-                                                                                                    onClick={() =>
-                                                                                                        void handleStartLecture(
-                                                                                                            roomNumber
-                                                                                                        )
-                                                                                                    }
-                                                                                                >
-                                                                                                    ▶ Rozpocznij zajęcia
-                                                                                                </button>
-                                                                                            </div>
-                                                                                        )}
-
-                                                                                    {roomActionError && (
-                                                                                        <div className="room-manager__error">
-                                                                                            {
-                                                                                                roomActionError
-                                                                                            }
-                                                                                        </div>
-                                                                                    )}
-                                                                                </div>
-                                                                            )}
-
-                                                                        {roomDetails?.directions && (
-                                                                            <p className="inline-room-info__directions">
-                                                                                {
-                                                                                    roomDetails.directions
-                                                                                }
-                                                                            </p>
-                                                                        )}
+                                                                {roomActionError && (
+                                                                    <div className="room-manager__error">
+                                                                        {roomActionError}
                                                                     </div>
-                                                                );
-                                                            })()}
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                </div>
+                                                )}
                                             </div>
-                                        );
-                                    }
-                                )}
-                            </div>
+                                        )}
+                                    </section>
+                                );
+                            })}
+                        </>
+                    )}
+
+                    {!selectedBuilding && searchResults.length === 0 && !searchError && (
+                        <div className="campus-panel__empty">
+                            Wybierz budynek na mapie lub użyj wyszukiwarki.
                         </div>
                     )}
                 </aside>

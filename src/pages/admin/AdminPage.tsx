@@ -1,13 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-
-import { buildings } from '../../mocks/buildings';
-import { entranceApi } from '../../services/entranceApi';
-
-import type { Entrance } from '../../types/Entrance';
-
+import {useEffect, useState} from 'react';
+import {Link} from 'react-router-dom';
+import {buildings} from '../../mocks/buildings';
+import {entranceApi} from '../../services/entranceApi';
+import type {Entrance} from '../../types/Entrance';
 import UsersAdminSection from './components/UsersAdminSection';
-
+import BuildingsAdminSection from './components/BuildingsAdminSection';
+import RoomsAdminSection from './components/RoomsAdminSection';
 import './AdminPage.css';
 
 type AdminSection =
@@ -243,65 +241,15 @@ function AdminPage() {
                     </>
                 )}
 
-                {section === 'buildings' && (
-                    <AdminComingSoon
-                        title="Budynki"
-                        description="Zarządzanie budynkami zostanie dodane w kolejnym etapie."
-                    />
-                )}
+                {section === 'buildings' && <BuildingsAdminSection/>}
 
-                {section === 'rooms' && (
-                    <AdminComingSoon
-                        title="Sale"
-                        description="Zarządzanie salami zostanie dodane w kolejnym etapie."
-                    />
-                )}
+                {section === 'rooms' && <RoomsAdminSection/>}
 
                 {section === 'users' && (
-                    <UsersAdminSection />
+                    <UsersAdminSection/>
                 )}
             </section>
         </main>
-    );
-}
-
-interface AdminComingSoonProps {
-    title: string;
-    description: string;
-}
-
-function AdminComingSoon({
-                             title,
-                             description,
-                         }: AdminComingSoonProps) {
-    return (
-        <>
-            <header className="admin-header">
-                <div>
-                    <span>
-                        Zarządzanie
-                    </span>
-
-                    <h1>
-                        {title}
-                    </h1>
-
-                    <p>
-                        {description}
-                    </p>
-                </div>
-            </header>
-
-            <div className="admin-card">
-                <h2>
-                    Moduł w przygotowaniu
-                </h2>
-
-                <p>
-                    Dodamy go w kolejnym etapie.
-                </p>
-            </div>
-        </>
     );
 }
 

@@ -1,0 +1,131 @@
+.rooms-admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 22px;
+}
+
+.rooms-admin-header span {
+    color: #9ca3af;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.rooms-admin-header h1 {
+    margin: 4px 0;
+    font-size: 28px;
+    color: #111827;
+}
+
+.rooms-admin-header p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.rooms-admin-primary,
+.rooms-admin-form button {
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 8px;
+    background: #111827;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.rooms-admin-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 16px;
+    margin-bottom: 18px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: white;
+}
+
+.rooms-admin-form > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.rooms-admin-form label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #374151;
+}
+
+.rooms-admin-form input,
+.rooms-admin-form select {
+    min-width: 180px;
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+}
+
+.rooms-admin-form .rooms-admin-cancel {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.rooms-admin-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: white;
+}
+
+.rooms-admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.rooms-admin-table th,
+.rooms-admin-table td {
+    padding: 13px 14px;
+    border-bottom: 1px solid #f3f4f6;
+    text-align: left;
+}
+
+.rooms-admin-table th {
+    background: #f9fafb;
+    color: #6b7280;
+    font-size: 11px;
+}
+
+.rooms-admin-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.rooms-admin-actions button {
+    padding: 6px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    background: white;
+    cursor: pointer;
+}
+
+.rooms-admin-actions .rooms-admin-delete {
+    color: #dc2626;
+    border-color: #fecaca;
+}
+
+.rooms-admin-error {
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.rooms-admin-card {
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+}
