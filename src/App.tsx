@@ -1,24 +1,26 @@
 import {
-    BrowserRouter,
+    Navigate,
     Route,
     Routes,
 } from 'react-router-dom';
 
-import CampusPage
-    from './pages/CampusPage';
+import CampusPage from './pages/CampusPage';
 
-import LecturerPage
-    from './pages/lecturer/LecturerPage';
+import LoginPage from './pages/login/LoginPage';
+import RegisterPage from './pages/register/RegisterPage';
 
-import AdminPage
-    from './pages/admin/AdminPage';
+import LecturerPage from './pages/lecturer/LecturerPage';
+import AdminPage from './pages/admin/AdminPage';
 
-import LoginPage
-    from './pages/login/LoginPage';
+import AccountMenu from './components/AccountMenu/AccountMenu';
+
+import './App.css';
 
 function App() {
     return (
-        <BrowserRouter>
+        <>
+            <AccountMenu />
+
             <Routes>
                 <Route
                     path="/"
@@ -35,6 +37,13 @@ function App() {
                 />
 
                 <Route
+                    path="/register"
+                    element={
+                        <RegisterPage />
+                    }
+                />
+
+                <Route
                     path="/lecturer"
                     element={
                         <LecturerPage />
@@ -47,8 +56,18 @@ function App() {
                         <AdminPage />
                     }
                 />
+
+                <Route
+                    path="*"
+                    element={
+                        <Navigate
+                            to="/"
+                            replace
+                        />
+                    }
+                />
             </Routes>
-        </BrowserRouter>
+        </>
     );
 }
 

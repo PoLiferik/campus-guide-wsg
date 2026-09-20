@@ -261,3 +261,43 @@
         flex-direction: column;
     }
 }
+
+.admin-direction {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 36px;
+    height: 36px;
+
+    border-radius: 8px;
+
+    background: #f3f4f6;
+
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.admin-direction-preview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 12px 15px;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 9px;
+
+    background: #f9fafb;
+}
+
+.admin-direction-preview span {
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.admin-direction-preview strong {
+    font-size: 34px;
+    line-height: 1;
+}

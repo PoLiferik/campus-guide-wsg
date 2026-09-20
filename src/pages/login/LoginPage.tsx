@@ -8,12 +8,16 @@ import {
 } from 'react-router-dom';
 
 import {
-    userApi,
-} from '../../services/userApi';
-
-import {
     authApi,
 } from '../../services/authApi';
+
+import {
+    studentAuthApi,
+} from '../../services/studentAuthApi';
+
+import {
+    userApi,
+} from '../../services/userApi';
 
 import type {
     User,
@@ -21,227 +25,399 @@ import type {
 
 import './LoginPage.css';
 
+type LoginMode =
+    | 'student'
+    | 'staff';
+
 function LoginPage() {
     const navigate =
         useNavigate();
 
     const [
+        mode,
+        setMode
+    ] =
+        useState<LoginMode>(
+            'student'
+        );
+
+    const [
         users,
         setUsers
-    ] = useState<User[]>([]);
+    ] =
+        useState<User[]>([]);
 
     const [
         selectedUserId,
         setSelectedUserId
-    ] = useState<number | null>(
-        null
-    );
+    ] =
+        useState('');
+
+    const [
+        email,
+        setEmail
+    ] =
+        useState('');
+
+    const [
+        password,
+        setPassword
+    ] =
+        useState('');
 
     const [
         error,
         setError
-    ] = useState<string | null>(
-        null
-    );
+    ] =
+        useState<string | null>(
+            null
+        );
 
     const [
         loading,
         setLoading
-    ] = useState(true);
+    ] =
+        useState(false);
 
     useEffect(() => {
-        const load =
-            async () => {
-                try {
-                    const data =
-                        await userApi.getAll();
+        async function loadUsers() {
+            const allUsers =
+                await userApi.getAll();
 
-                    const activeUsers =
-                        data.filter(
-                            (user) =>
-                                user.isActive
-                        );
+            const activeUsers =
+                allUsers.filter(
+                    (user) =>
+                        user.isActive
+                );
 
-                    setUsers(
-                        activeUsers
-                    );
+            setUsers(
+                activeUsers
+            );
 
-                    if (
-                        activeUsers.length >
-                        0
-                    ) {
-                        setSelectedUserId(
-                            activeUsers[0].id
-                        );
-                    }
-                } finally {
-                    setLoading(false);
-                }
-            };
+            if (
+                activeUsers.length >
+                0
+            ) {
+                setSelectedUserId(
+                    String(
+                        activeUsers[0].id
+                    )
+                );
+            }
+        }
 
-        load();
+        void loadUsers();
     }, []);
 
-    const handleLogin =
-        async () => {
+    async function handleStudentLogin(
+        event:
+        React.FormEvent
+    ) {
+        event.preventDefault();
+
+        try {
+            setLoading(true);
+            setError(null);
+
+            await authApi.logout();
+
+            await studentAuthApi
+                .login(
+                    email,
+                    password
+                );
+
+            navigate('/');
+        } catch {
+            setError(
+                'Nieprawidłowy e-mail lub hasło.'
+            );
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function handleStaffLogin() {
+        const userId =
+            Number(
+                selectedUserId
+            );
+
+        if (
+            Number.isNaN(userId)
+        ) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError(null);
+
+            await studentAuthApi
+                .logout();
+
+            const user =
+                await authApi.login(
+                    userId
+                );
+
             if (
-                selectedUserId ===
-                null
+                user.role ===
+                'admin'
             ) {
-                return;
-            }
-
-            try {
-                setError(null);
-
-                const user =
-                    await authApi.login(
-                        selectedUserId
-                    );
-
-                if (
-                    user.role ===
-                    'admin'
-                ) {
-                    navigate(
-                        '/admin'
-                    );
-
-                    return;
-                }
-
+                navigate('/admin');
+            } else {
                 navigate(
                     '/lecturer'
                 );
-            } catch (error) {
-                if (
-                    error instanceof Error &&
-                    error.message ===
-                    'USER_BLOCKED'
-                ) {
-                    setError(
-                        'Konto jest zablokowane.'
-                    );
-
-                    return;
-                }
-
-                setError(
-                    'Nie udało się zalogować.'
-                );
             }
-        };
-
-    const handleGuest =
-        async () => {
-            await authApi.logout();
-
-            navigate('/');
-        };
-
-    if (loading) {
-        return (
-            <main className="login-page">
-                <div className="login-card">
-                    Ładowanie...
-                </div>
-            </main>
-        );
+        } catch {
+            setError(
+                'Nie można zalogować użytkownika.'
+            );
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
         <main className="login-page">
-            <div className="login-card">
-                <div className="login-card__header">
+            <section className="login-card">
+                <button
+                    type="button"
+                    className="login-card__back"
+
+                    onClick={() =>
+                        navigate('/')
+                    }
+                >
+                    ← Mapa kampusu
+                </button>
+
+                <div className="login-card__brand">
                     <span>
-                        Campus Guide WSG
+                        WSG
                     </span>
 
                     <h1>
-                        Logowanie
+                        Campus Guide
                     </h1>
 
                     <p>
-                        Tryb demonstracyjny
+                        Zaloguj się do swojego konta
                     </p>
                 </div>
 
-                <label className="login-field">
-                    Konto
+                <div className="login-tabs">
+                    <button
+                        type="button"
 
-                    <select
-                        value={
-                            selectedUserId ??
-                            ''
+                        className={
+                            mode ===
+                            'student'
+                                ? 'login-tabs__button login-tabs__button--active'
+                                : 'login-tabs__button'
                         }
-                        onChange={(
-                            event
-                        ) =>
-                            setSelectedUserId(
-                                Number(
-                                    event
-                                        .target
-                                        .value
-                                )
-                            )
+
+                        onClick={() => {
+                            setMode(
+                                'student'
+                            );
+
+                            setError(null);
+                        }}
+                    >
+                        Student
+                    </button>
+
+                    <button
+                        type="button"
+
+                        className={
+                            mode ===
+                            'staff'
+                                ? 'login-tabs__button login-tabs__button--active'
+                                : 'login-tabs__button'
+                        }
+
+                        onClick={() => {
+                            setMode(
+                                'staff'
+                            );
+
+                            setError(null);
+                        }}
+                    >
+                        Pracownik
+                    </button>
+                </div>
+
+                {mode ===
+                'student' ? (
+                    <form
+                        className="login-form"
+                        onSubmit={
+                            handleStudentLogin
                         }
                     >
-                        {users.map(
-                            (user) => (
-                                <option
-                                    key={
-                                        user.id
-                                    }
-                                    value={
-                                        user.id
-                                    }
-                                >
-                                    {
-                                        user.name
-                                    }
-                                    {' — '}
-                                    {
-                                        user.role ===
-                                        'admin'
-                                            ? 'Administrator'
-                                            : 'Wykładowca'
-                                    }
-                                </option>
-                            )
+                        <label>
+                            E-mail
+
+                            <input
+                                type="email"
+                                value={
+                                    email
+                                }
+                                placeholder="student@example.com"
+                                required
+
+                                onChange={(
+                                    event
+                                ) =>
+                                    setEmail(
+                                        event
+                                            .target
+                                            .value
+                                    )
+                                }
+                            />
+                        </label>
+
+                        <label>
+                            Hasło
+
+                            <input
+                                type="password"
+                                value={
+                                    password
+                                }
+                                placeholder="••••••••"
+                                required
+
+                                onChange={(
+                                    event
+                                ) =>
+                                    setPassword(
+                                        event
+                                            .target
+                                            .value
+                                    )
+                                }
+                            />
+                        </label>
+
+                        {error && (
+                            <div className="login-error">
+                                {error}
+                            </div>
                         )}
-                    </select>
-                </label>
-                <div className="login-demo-info">
-                    W wersji demonstracyjnej
-                    wybieramy konto bez hasła.
-                    Po podłączeniu ASP.NET
-                    będzie tutaj normalne
-                    logowanie.
-                </div>
-                {error && (
-                    <div className="login-error">
-                        {error}
+
+                        <button
+                            type="submit"
+                            className="login-form__submit"
+                            disabled={
+                                loading
+                            }
+                        >
+                            {loading
+                                ? 'Logowanie...'
+                                : 'Zaloguj się'}
+                        </button>
+
+                        <div className="login-register">
+                            Nie masz konta?
+
+                            <button
+                                type="button"
+
+                                onClick={() =>
+                                    navigate(
+                                        '/register'
+                                    )
+                                }
+                            >
+                                Zarejestruj się
+                            </button>
+                        </div>
+                    </form>
+                ) : (
+                    <div className="login-form">
+                        <div className="login-demo-info">
+                            Konta wykładowców tworzy administrator.
+                            Wersja demonstracyjna pozwala wybrać konto.
+                        </div>
+
+                        <label>
+                            Konto
+
+                            <select
+                                value={
+                                    selectedUserId
+                                }
+
+                                onChange={(
+                                    event
+                                ) =>
+                                    setSelectedUserId(
+                                        event
+                                            .target
+                                            .value
+                                    )
+                                }
+                            >
+                                {users.map(
+                                    (
+                                        user
+                                    ) => (
+                                        <option
+                                            key={
+                                                user.id
+                                            }
+
+                                            value={
+                                                user.id
+                                            }
+                                        >
+                                            {
+                                                user.name
+                                            }
+                                            {' — '}
+                                            {user.role ===
+                                            'admin'
+                                                ? 'Administrator'
+                                                : 'Wykładowca'}
+                                        </option>
+                                    )
+                                )}
+                            </select>
+                        </label>
+
+                        {error && (
+                            <div className="login-error">
+                                {error}
+                            </div>
+                        )}
+
+                        <button
+                            type="button"
+                            className="login-form__submit"
+
+                            disabled={
+                                loading ||
+                                !selectedUserId
+                            }
+
+                            onClick={() =>
+                                void handleStaffLogin()
+                            }
+                        >
+                            {loading
+                                ? 'Logowanie...'
+                                : 'Zaloguj się'}
+                        </button>
                     </div>
                 )}
-                <button
-                    type="button"
-                    className="login-primary"
-                    onClick={
-                        handleLogin
-                    }
-                >
-                    Zaloguj się
-                </button>
-                <button
-                    type="button"
-                    className="login-secondary"
-                    onClick={
-                        handleGuest
-                    }
-                >
-                    Wejdź jako student / gość
-                </button>
-            </div>
+            </section>
         </main>
     );
 }

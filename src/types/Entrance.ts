@@ -1,3 +1,8 @@
+export type EntranceDirection =
+    'up' |
+    'right' |
+    'down' |
+    'left';
 export type EntranceAccessibility =
     | 'unknown'
     | 'step_free'
@@ -9,7 +14,7 @@ export interface Entrance {
     id: number;
     buildingId: number;
     code: string;
-
+    direction?: EntranceDirection;
     x: number;
     y: number;
 

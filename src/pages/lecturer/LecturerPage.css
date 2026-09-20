@@ -1,83 +1,119 @@
+* {
+    box-sizing: border-box;
+}
+
+/* ========================================
+   PAGE
+   ======================================== */
+
 .lecturer-page {
     display: grid;
-    grid-template-columns: 260px 1fr;
+    grid-template-columns: 240px minmax(0, 1fr);
+
     min-height: 100vh;
+
     background: #f4f6f8;
     color: #111827;
 }
 
+/* ========================================
+   SIDEBAR
+   ======================================== */
+
 .lecturer-sidebar {
     display: flex;
     flex-direction: column;
+
     min-height: 100vh;
+
     padding: 24px 18px;
+
     background: #111827;
     color: white;
 }
 
 .lecturer-sidebar__small {
     color: #9ca3af;
-    font-size: 12px;
+
+    font-size: 11px;
 }
 
 .lecturer-sidebar h1 {
-    margin: 5px 0 30px;
-    font-size: 21px;
+    margin: 5px 0 28px;
+
+    font-size: 20px;
 }
 
 .lecturer-user {
     display: flex;
     flex-direction: column;
+
     gap: 4px;
-    padding: 14px;
+
+    padding: 13px;
+
     border-radius: 10px;
+
     background: #1f2937;
 }
 
 .lecturer-user span,
 .lecturer-user small {
     color: #9ca3af;
+
     font-size: 11px;
 }
 
 .lecturer-access {
-    margin-top: 24px;
+    margin-top: 22px;
 }
 
 .lecturer-access > span {
     color: #9ca3af;
-    font-size: 12px;
+
+    font-size: 11px;
 }
 
 .lecturer-access__list {
     display: flex;
     flex-wrap: wrap;
-    gap: 7px;
-    margin-top: 10px;
+
+    gap: 6px;
+
+    margin-top: 9px;
 }
 
 .lecturer-building-badge {
-    min-width: 34px;
-    padding: 6px 9px;
+    min-width: 32px;
+
+    padding: 5px 8px;
+
     border-radius: 999px;
+
     background: #166534;
     color: #dcfce7;
+
     text-align: center;
-    font-size: 12px;
+
+    font-size: 11px;
     font-weight: 700;
 }
 
 .lecturer-sidebar__bottom {
     display: flex;
     flex-direction: column;
-    gap: 11px;
+
+    gap: 10px;
+
     margin-top: auto;
 }
 
 .lecturer-link {
     color: #d1d5db;
+
     text-decoration: none;
-    font-size: 13px;
+
+    font-size: 12px;
 }
 
 .lecturer-link:hover {
@@ -85,12 +121,16 @@
 }
 
 .lecturer-logout {
-    margin-top: 8px;
+    margin-top: 7px;
+
     padding: 10px;
+
     border: 1px solid #374151;
     border-radius: 8px;
+
     background: transparent;
     color: #d1d5db;
+
     cursor: pointer;
 }
 
@@ -99,159 +139,320 @@
     color: white;
 }
 
+/* ========================================
+   CONTENT
+   ======================================== */
+
 .lecturer-content {
-    padding: 34px;
+    width: 100%;
+
+    padding: 32px;
 }
 
 .lecturer-header {
-    margin-bottom: 26px;
+    width: min(100%, 900px);
+
+    margin: 0 auto 22px;
 }
 
 .lecturer-header span {
     color: #6b7280;
-    font-size: 12px;
+
+    font-size: 11px;
 }
 
 .lecturer-header h2 {
     margin: 3px 0;
-    font-size: 32px;
+
+    font-size: 28px;
 }
 
 .lecturer-header p {
     margin: 0;
+
     color: #6b7280;
+
+    font-size: 13px;
 }
+
+/* ========================================
+   MAIN GRID
+   ======================================== */
 
 .lecturer-grid {
     display: grid;
     grid-template-columns:
-        minmax(260px, 0.7fr)
-        minmax(360px, 1.3fr);
-    gap: 18px;
+        minmax(220px, 300px)
+        minmax(0, 1fr);
+
+    gap: 16px;
+
+    width: min(100%, 900px);
+
+    margin: 0 auto;
 }
 
 .lecturer-card {
-    padding: 22px;
+    min-width: 0;
+
+    padding: 20px;
+
     border: 1px solid #e5e7eb;
     border-radius: 14px;
+
     background: white;
 }
+
+/* ========================================
+   FORM
+   ======================================== */
 
 .lecturer-field {
     display: flex;
     flex-direction: column;
-    gap: 7px;
-    font-size: 13px;
+
+    min-width: 0;
+
+    gap: 6px;
+
+    font-size: 12px;
     font-weight: 700;
 }
 
 .lecturer-field select,
 .lecturer-field input {
+    display: block;
+
     width: 100%;
+    min-width: 0;
+
     padding: 11px 12px;
+
     border: 1px solid #d1d5db;
     border-radius: 8px;
+
     background: white;
+
+    color: #111827;
+
     font: inherit;
     font-weight: 400;
 }
 
+.lecturer-field select:focus,
+.lecturer-field input:focus {
+    border-color: #111827;
+
+    outline: none;
+
+    box-shadow:
+            0 0 0 2px
+            rgba(17, 24, 39, 0.08);
+}
+
+/* ========================================
+   BUILDING INFO
+   ======================================== */
+
 .lecturer-building-info {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-top: 24px;
+
+    gap: 5px;
+
+    margin-top: 20px;
 }
 
 .lecturer-building-info > span:first-child {
     color: #6b7280;
-    font-size: 12px;
+
+    font-size: 11px;
 }
 
 .lecturer-building-info strong {
-    font-size: 42px;
+    font-size: 36px;
 }
 
 .lecturer-access-ok {
     color: #15803d;
-    font-size: 13px;
+
+    font-size: 12px;
     font-weight: 700;
 }
+
+/* ========================================
+   STATUS
+   ======================================== */
 
 .lecturer-status-switch {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 9px;
-    margin-top: 22px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 10px;
+
+    margin-top: 18px;
 }
 
 .lecturer-status-button {
-    padding: 12px;
+    min-width: 0;
+
+    padding: 11px;
+
     border: 1px solid #d1d5db;
-    border-radius: 9px;
+    border-radius: 8px;
+
     background: white;
+
     color: #6b7280;
+
+    font-size: 13px;
     font-weight: 700;
+
     cursor: pointer;
 }
 
 .lecturer-status-button--open.lecturer-status-button--active {
     border-color: #22c55e;
+
     background: #dcfce7;
+
     color: #15803d;
 }
 
 .lecturer-status-button--closed.lecturer-status-button--active {
     border-color: #ef4444;
+
     background: #fee2e2;
+
     color: #b91c1c;
 }
 
+/* ========================================
+   HOURS
+   ======================================== */
+
 .lecturer-hours {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
     gap: 12px;
+
+    width: 100%;
+
     margin-top: 18px;
 }
 
+.lecturer-hours .lecturer-field {
+    min-width: 0;
+}
+
+.lecturer-hours input[type="time"] {
+    width: 100%;
+    min-width: 0;
+
+    box-sizing: border-box;
+}
+
+/* ========================================
+   SAVE
+   ======================================== */
+
 .lecturer-save {
     width: 100%;
-    margin-top: 22px;
+
+    margin-top: 20px;
+
     padding: 12px;
+
     border: none;
     border-radius: 9px;
+
     background: #111827;
     color: white;
+
+    font-size: 13px;
     font-weight: 700;
+
     cursor: pointer;
 }
 
-.lecturer-save:disabled {
-    opacity: 0.6;
+.lecturer-save:hover {
+    background: #1f2937;
 }
+
+.lecturer-save:disabled {
+    opacity: 0.55;
+
+    cursor: default;
+}
+
+/* ========================================
+   MESSAGE
+   ======================================== */
 
 .lecturer-message {
-    margin-top: 12px;
-    padding: 10px;
+    margin-top: 10px;
+
+    padding: 9px 11px;
+
     border-radius: 8px;
+
     background: #f3f4f6;
-    font-size: 13px;
+
+    color: #374151;
+
+    font-size: 12px;
 }
 
-@media (max-width: 850px) {
-    .lecturer-page {
+/* ========================================
+   TABLET
+   ======================================== */
+
+@media (max-width: 1000px) {
+    .lecturer-grid {
         grid-template-columns: 1fr;
+
+        max-width: 700px;
+    }
+}
+
+/* ========================================
+   MOBILE
+   ======================================== */
+
+@media (max-width: 700px) {
+    .lecturer-page {
+        display: block;
     }
 
     .lecturer-sidebar {
         min-height: auto;
-    }
 
-    .lecturer-content {
         padding: 18px;
     }
 
-    .lecturer-grid {
+    .lecturer-content {
+        padding: 16px;
+    }
+
+    .lecturer-header {
+        margin-bottom: 16px;
+    }
+
+    .lecturer-header h2 {
+        font-size: 23px;
+    }
+
+    .lecturer-card {
+        padding: 16px;
+    }
+
+    .lecturer-hours {
         grid-template-columns: 1fr;
+    }
+
+    .lecturer-status-switch {
+        grid-template-columns: 1fr 1fr;
     }
 }

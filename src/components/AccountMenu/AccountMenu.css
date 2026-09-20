@@ -1,0 +1,262 @@
+.account-menu {
+    position: fixed;
+
+    top: 14px;
+    left: 14px;
+    right: auto;
+
+    z-index: 9000;
+
+    display: flex;
+    gap: 6px;
+}
+
+/*
+    На карте аккаунт теперь всегда слева.
+*/
+.account-menu--map {
+    left: 14px;
+    right: auto;
+}
+
+/* =========================
+   LOGIN / REGISTER
+   ========================= */
+
+.account-menu__login,
+.account-menu__register {
+    min-height: 38px;
+
+    padding: 0 13px;
+
+    border-radius: 10px;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    cursor: pointer;
+
+    box-shadow:
+            0 4px 14px
+            rgba(0, 0, 0, 0.12);
+}
+
+.account-menu__login {
+    border: 0;
+
+    background: #111827;
+    color: white;
+}
+
+.account-menu__register {
+    border: 1px solid #d1d5db;
+
+    background: white;
+    color: #111827;
+}
+
+/* =========================
+   PROFILE BUTTON
+   ========================= */
+
+.account-menu__profile {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    min-height: 42px;
+
+    padding: 5px 9px 5px 5px;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+
+    background: rgba(
+            255,
+            255,
+            255,
+            0.98
+    );
+
+    box-shadow:
+            0 5px 18px
+            rgba(0, 0, 0, 0.13);
+
+    cursor: pointer;
+}
+
+.account-menu__avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 32px;
+    height: 32px;
+
+    flex-shrink: 0;
+
+    border-radius: 9px;
+
+    background: #111827;
+    color: white;
+
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.account-menu__profile-text {
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+
+    text-align: left;
+}
+
+.account-menu__profile-text strong {
+    max-width: 130px;
+
+    overflow: hidden;
+
+    color: #111827;
+
+    font-size: 10px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-menu__profile-text small {
+    color: #9ca3af;
+
+    font-size: 8px;
+}
+
+.account-menu__chevron {
+    margin-left: 3px;
+
+    color: #9ca3af;
+
+    font-size: 7px;
+}
+
+/* =========================
+   DROPDOWN
+   ========================= */
+
+.account-menu__dropdown {
+    position: absolute;
+
+    top: calc(100% + 6px);
+    left: 0;
+    right: auto;
+
+    width: 220px;
+
+    padding: 7px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+
+    background: white;
+
+    box-shadow:
+            0 10px 30px
+            rgba(0, 0, 0, 0.15);
+}
+
+.account-menu__user {
+    display: flex;
+    flex-direction: column;
+
+    padding: 7px 8px;
+}
+
+.account-menu__user strong {
+    color: #111827;
+
+    font-size: 11px;
+}
+
+.account-menu__user span {
+    margin-top: 2px;
+
+    color: #6b7280;
+
+    font-size: 9px;
+}
+
+.account-menu__user small {
+    margin-top: 4px;
+
+    color: #2563eb;
+
+    font-size: 8px;
+    font-weight: 800;
+}
+
+.account-menu__divider {
+    height: 1px;
+
+    margin: 5px 0;
+
+    background: #e5e7eb;
+}
+
+.account-menu__dropdown button {
+    width: 100%;
+
+    padding: 8px;
+
+    border: 0;
+    border-radius: 7px;
+
+    background: transparent;
+    color: #374151;
+
+    text-align: left;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.account-menu__dropdown button:hover {
+    background: #f3f4f6;
+}
+
+.account-menu__dropdown,
+.account-menu__logout {
+    color: #dc2626;
+}
+
+/* =========================
+   MOBILE
+   ========================= */
+
+@media (max-width: 700px) {
+    .account-menu,
+    .account-menu--map {
+        top: auto;
+        bottom: 8px;
+
+        left: 8px;
+        right: auto;
+    }
+
+    .account-menu__profile-text {
+        display: none;
+    }
+
+    .account-menu__dropdown {
+        top: auto;
+        bottom: calc(100% + 6px);
+
+        left: 0;
+        right: auto;
+    }
+}

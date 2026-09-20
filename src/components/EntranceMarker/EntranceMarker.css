@@ -1,0 +1,81 @@
+.entrance-arrow-wrapper {
+    background: transparent !important;
+    border: none !important;
+}
+
+.entrance-arrow {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 18px;
+    height: 18px;
+
+    color: #9ca3af;
+
+    cursor: pointer;
+
+    transform-origin: center center;
+}
+
+.entrance-arrow__shaft {
+    width: 8px;
+    height: 3px;
+
+    border-radius: 2px;
+
+    background: currentColor;
+}
+
+.entrance-arrow__head {
+    width: 0;
+    height: 0;
+
+    margin-left: -1px;
+
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 7px solid currentColor;
+}
+
+/* STATUS */
+
+.entrance-arrow--open {
+    color: #22c55e;
+}
+
+.entrance-arrow--closed {
+    color: #ef4444;
+}
+
+.entrance-arrow--unknown {
+    color: #9ca3af;
+}
+
+/* DIRECTION */
+
+.entrance-arrow--right {
+    transform: rotate(0deg);
+}
+
+.entrance-arrow--down {
+    transform: rotate(90deg);
+}
+
+.entrance-arrow--left {
+    transform: rotate(180deg);
+}
+
+.entrance-arrow--up {
+    transform: rotate(-90deg);
+}
+
+/* RECOMMENDED */
+
+.entrance-arrow--recommended {
+    filter:
+            drop-shadow(0 0 1px #f59e0b)
+            drop-shadow(0 0 2px #f59e0b);
+}

@@ -1,70 +1,93 @@
-import type { User } from '../types/User';
 import { userApi } from './userApi';
 
-const CURRENT_USER_KEY =
+import type {
+    User,
+} from '../types/User';
+
+const STORAGE_KEY =
     'campus-guide-current-user-id';
 
 export const authApi = {
     async login(
         userId: number
     ): Promise<User> {
+        const users =
+            await userApi.getAll();
+
         const user =
-            await userApi.getById(
-                userId
+            users.find(
+                (item) =>
+                    item.id === userId
             );
-        if (!user.isActive) {
+
+        if (
+            !user ||
+            !user.isActive
+        ) {
             throw new Error(
-                'USER_BLOCKED'
+                'USER_NOT_AVAILABLE'
             );
         }
+
         localStorage.setItem(
-            CURRENT_USER_KEY,
+            STORAGE_KEY,
             String(user.id)
         );
+
         return user;
     },
+
     async getCurrentUser():
         Promise<User | null> {
-        const saved =
+
+        const savedId =
             localStorage.getItem(
-                CURRENT_USER_KEY
+                STORAGE_KEY
             );
-        if (!saved) {
+
+        if (!savedId) {
             return null;
         }
+
         const userId =
-            Number(saved);
+            Number(savedId);
+
         if (
             Number.isNaN(userId)
         ) {
             localStorage.removeItem(
-                CURRENT_USER_KEY
+                STORAGE_KEY
             );
+
             return null;
         }
-        try {
-            const user =
-                await userApi.getById(
-                    userId
-                );
-            if (!user.isActive) {
-                localStorage.removeItem(
-                    CURRENT_USER_KEY
-                );
-                return null;
-            }
-            return user;
-        } catch {
+
+        const users =
+            await userApi.getAll();
+
+        const user =
+            users.find(
+                (item) =>
+                    item.id === userId
+            );
+
+        if (
+            !user ||
+            !user.isActive
+        ) {
             localStorage.removeItem(
-                CURRENT_USER_KEY
+                STORAGE_KEY
             );
+
             return null;
         }
+
+        return user;
     },
-    async logout():
-        Promise<void> {
+
+    async logout() {
         localStorage.removeItem(
-            CURRENT_USER_KEY
+            STORAGE_KEY
         );
     },
 };

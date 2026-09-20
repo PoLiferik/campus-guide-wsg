@@ -1,77 +1,109 @@
-import { CircleMarker, Tooltip } from 'react-leaflet';
+import { divIcon } from 'leaflet';
 import type { LatLngExpression } from 'leaflet';
+import { Marker, Tooltip } from 'react-leaflet';
 
-import type { Entrance } from '../../types/Entrance';
+import type {
+    Entrance,
+    EntranceDirection,
+} from '../../types/Entrance';
 
-interface EntranceMarkerProps {
+import './EntranceMarker.css';
+
+interface Props {
     entrance: Entrance;
     position: LatLngExpression;
     isRecommended: boolean;
 }
 
-const DEFAULT_COLORS = {
-    fillColor: '#9ca3af',
-    borderColor: '#6b7280',
-    statusText: 'Brak danych',
-};
+function EntranceMarker({
+                            entrance,
+                            position,
+                            isRecommended,
+                        }: Props) {
+    const statusClass =
+        entrance.isOpen === true
+            ? 'entrance-arrow--open'
+            : entrance.isOpen === false
+                ? 'entrance-arrow--closed'
+                : 'entrance-arrow--unknown';
 
-const getEntranceVisualState = (isOpen: Entrance['isOpen']) => {
-    if (isOpen === true) {
-        return {
-            fillColor: '#22c55e',
-            borderColor: '#15803d',
-            statusText: 'Otwarte',
-        };
-    }
+    const recommendedClass =
+        isRecommended
+            ? 'entrance-arrow--recommended'
+            : '';
 
-    if (isOpen === false) {
-        return {
-            fillColor: '#ef4444',
-            borderColor: '#b91c1c',
-            statusText: 'Zamknięte',
-        };
-    }
+    const direction: EntranceDirection =
+        entrance.direction ?? 'right';
 
-    return DEFAULT_COLORS;
-};
+    const icon = divIcon({
+        className: 'entrance-arrow-wrapper',
+        html: `
+            <div class="
+                entrance-arrow
+                ${statusClass}
+                ${recommendedClass}
+                entrance-arrow--${direction}
+            ">
+                <div class="entrance-arrow__shaft"></div>
+                <div class="entrance-arrow__head"></div>
+            </div>
+        `,
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+    });
 
-function EntranceMarker({ entrance, position, isRecommended }: EntranceMarkerProps) {
-    const visualState = getEntranceVisualState(entrance.isOpen);
-    const borderColor = isRecommended ? '#f59e0b' : visualState.borderColor;
-    const radius = isRecommended ? 12 : 8;
-    const weight = isRecommended ? 5 : 3;
-    const description = entrance.description ?? 'Brak opisu';
+    const getStatusText = () => {
+        if (entrance.isOpen === true) {
+            return 'Otwarte';
+        }
+
+        if (entrance.isOpen === false) {
+            return 'Zamknięte';
+        }
+
+        return 'Brak danych';
+    };
+
+    const getHoursText = () => {
+        if (
+            entrance.openFrom &&
+            entrance.openUntil
+        ) {
+            return `${entrance.openFrom} – ${entrance.openUntil}`;
+        }
+
+        return 'Brak danych o godzinach';
+    };
 
     return (
-        <CircleMarker
-            center={position}
-            radius={radius}
-            pathOptions={{
-                color: borderColor,
-                fillColor: visualState.fillColor,
-                weight,
-                fillOpacity: 1,
-            }}
+        <Marker
+            position={position}
+            icon={icon}
         >
-            <Tooltip>
+            <Tooltip
+                direction="top"
+                offset={[0, -8]}
+            >
                 <div>
-                    {isRecommended && (
-                        <>
-                            <strong>★ Zalecane wejście</strong>
-                            <br />
-                        </>
-                    )}
+                    <strong>
+                        {entrance.code}
+                    </strong>
 
-                    <strong>Wejście {entrance.code}</strong>
                     <br />
-                    {description}
+
+                    {entrance.description ??
+                        'Wejście'}
+
                     <br />
-                    Status: {visualState.statusText}
+
+                    {getStatusText()}
+
                     <br />
-                    <small>Dane demonstracyjne</small>
+
+                    {getHoursText()}
                 </div>
             </Tooltip>
-        </CircleMarker>
+        </Marker>
     );
 }
 

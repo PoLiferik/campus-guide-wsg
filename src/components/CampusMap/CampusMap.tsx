@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+
 import {
     CircleMarker,
     ImageOverlay,
@@ -8,6 +9,7 @@ import {
 } from 'react-leaflet';
 
 import { CRS } from 'leaflet';
+
 import type {
     LatLngBoundsExpression,
     LatLngExpression,
@@ -26,42 +28,98 @@ import './CampusMap.css';
 
 const IMAGE_WIDTH = 963;
 const IMAGE_HEIGHT = 1280;
-const IMAGE_URL = '/maps/campus-map.jpg';
+
+const IMAGE_URL =
+    '/maps/campus-map.jpg';
 
 const imageBounds: LatLngBoundsExpression = [
     [0, 0],
     [IMAGE_HEIGHT, IMAGE_WIDTH],
 ];
 
-const mapBounds: LatLngBoundsExpression = [
-    [-300, -300],
-    [IMAGE_HEIGHT + 300, IMAGE_WIDTH + 300],
-];
+/*
+    Dokładne środki czarnych oznaczeń
+    budynków na mapie.
+*/
+const BUILDING_LABEL_POSITIONS:
+    Record<string, MapPoint> = {
+    A: {
+        x: 0.7889,
+        y: 0.5950,
+    },
 
-const BUILDING_LABEL_POSITIONS: Record<string, MapPoint> = {
-    A: { x: 0.789, y: 0.593 },
-    B: { x: 0.661, y: 0.583 },
-    C: { x: 0.587, y: 0.587 },
-    D: { x: 0.729, y: 0.475 },
-    E: { x: 0.375, y: 0.403 },
-    G: { x: 0.533, y: 0.714 },
-    H: { x: 0.597, y: 0.701 },
-    K: { x: 0.193, y: 0.375 },
-    L: { x: 0.197, y: 0.214 },
-    M: { x: 0.354, y: 0.546 },
+    B: {
+        x: 0.6610,
+        y: 0.5809,
+    },
+
+    C: {
+        x: 0.5878,
+        y: 0.5849,
+    },
+
+    D: {
+        x: 0.7285,
+        y: 0.4745,
+    },
+
+    E: {
+        x: 0.3754,
+        y: 0.4050,
+    },
+
+    G: {
+        x: 0.5319,
+        y: 0.7130,
+    },
+
+    H: {
+        x: 0.5967,
+        y: 0.7018,
+    },
+
+    K: {
+        x: 0.1928,
+        y: 0.3765,
+    },
+
+    L: {
+        x: 0.2000,
+        y: 0.2128,
+    },
+
+    M: {
+        x: 0.3535,
+        y: 0.5490,
+    },
 };
 
 interface Props {
-    selectedBuildingId: number | null;
-    recommendedEntranceId: number | null;
-    entrances: Entrance[];
-    onBuildingSelect: (buildingId: number | null) => void;
+    selectedBuildingId:
+        number | null;
+
+    recommendedEntranceId:
+        number | null;
+
+    entrances:
+        Entrance[];
+
+    onBuildingSelect:
+        (
+            buildingId:
+                number | null
+        ) => void;
 }
 
-function pointToLatLng(point: MapPoint): LatLngExpression {
+function pointToLatLng(
+    point: MapPoint
+): LatLngExpression {
     return [
-        IMAGE_HEIGHT * (1 - point.y),
-        IMAGE_WIDTH * point.x,
+        IMAGE_HEIGHT *
+        (1 - point.y),
+
+        IMAGE_WIDTH *
+        point.x,
     ];
 }
 
@@ -69,38 +127,18 @@ function InitialMapView() {
     const map = useMap();
 
     useEffect(() => {
-        map.fitBounds(imageBounds, {
-            padding: [30, 30],
-        });
+        map.fitBounds(
+            imageBounds,
+            {
+                padding: [
+                    30,
+                    30,
+                ],
+            }
+        );
     }, [map]);
 
     return null;
-}
-
-function MapResetButton({
-                            onReset,
-                        }: {
-    onReset: () => void;
-}) {
-    const map = useMap();
-
-    const handleReset = () => {
-        map.flyToBounds(imageBounds, {
-            padding: [30, 30],
-        });
-
-        onReset();
-    };
-
-    return (
-        <button
-            type="button"
-            className="campus-map__reset"
-            onClick={handleReset}
-        >
-            Pokaż cały kampus
-        </button>
-    );
 }
 
 function CampusMap({
@@ -109,17 +147,25 @@ function CampusMap({
                        entrances,
                        onBuildingSelect,
                    }: Props) {
-    const [currentUser, setCurrentUser] =
-        useState<User | null>(null);
+    const [
+        currentUser,
+        setCurrentUser
+    ] =
+        useState<User | null>(
+            null
+        );
 
     useEffect(() => {
-        authApi
+        void authApi
             .getCurrentUser()
-            .then(setCurrentUser);
+            .then(
+                setCurrentUser
+            );
     }, []);
 
     const selectedEntrances =
-        selectedBuildingId === null
+        selectedBuildingId ===
+        null
             ? []
             : entrances.filter(
                 (entrance) =>
@@ -127,15 +173,13 @@ function CampusMap({
                     selectedBuildingId
             );
 
-    const hasAccess = (
+    function hasEditAccess(
         buildingId: number
-    ) => {
-        // Student / gość
+    ) {
         if (!currentUser) {
-            return true;
+            return false;
         }
 
-        // Admin ma dostęp do wszystkiego
         if (
             currentUser.role ===
             'admin'
@@ -143,16 +187,28 @@ function CampusMap({
             return true;
         }
 
-        // Wykładowca tylko do przypisanych budynków
-        return currentUser
-            .assignedBuildingIds
-            .includes(buildingId);
-    };
+        if (
+            currentUser.role ===
+            'lecturer'
+        ) {
+            return currentUser
+                .assignedBuildingIds
+                .includes(
+                    buildingId
+                );
+        }
 
-    const getBuildingColor = (
+        return false;
+    }
+
+    function getBuildingColor(
         buildingId: number
-    ) => {
-        // Wybrany budynek zawsze czerwony
+    ) {
+        /*
+            Wybrany budynek:
+            tylko zmiana koloru.
+            Rozmiar się NIE zmienia.
+        */
         if (
             selectedBuildingId ===
             buildingId
@@ -160,12 +216,17 @@ function CampusMap({
             return '#ef4444';
         }
 
-        // Student / gość
+        /*
+            Student / niezalogowany.
+        */
         if (!currentUser) {
             return '#2563eb';
         }
 
-        // Administrator
+        /*
+            Administrator:
+            wszystkie budynki zielone.
+        */
         if (
             currentUser.role ===
             'admin'
@@ -173,50 +234,58 @@ function CampusMap({
             return '#22c55e';
         }
 
-        // Wykładowca
+        /*
+            Wykładowca:
+            przypisane = zielone,
+            pozostałe = niebieskie.
+        */
         if (
-            hasAccess(buildingId)
+            hasEditAccess(
+                buildingId
+            )
         ) {
             return '#22c55e';
         }
 
-        return '#9ca3af';
-    };
+        return '#2563eb';
+    }
 
-    const handleBuildingClick = (
+    function handleBuildingClick(
         buildingId: number
-    ) => {
-        // Wykładowca nie może wybrać
-        // nieprzypisanego budynku
-        if (
-            currentUser?.role ===
-            'lecturer' &&
-            !hasAccess(buildingId)
-        ) {
-            return;
-        }
-
+    ) {
         if (
             selectedBuildingId ===
             buildingId
         ) {
-            onBuildingSelect(null);
+            onBuildingSelect(
+                null
+            );
+
             return;
         }
 
-        onBuildingSelect(buildingId);
-    };
+        onBuildingSelect(
+            buildingId
+        );
+    }
 
     return (
         <div className="campus-map">
             <MapContainer
                 crs={CRS.Simple}
                 bounds={imageBounds}
-                maxBounds={mapBounds}
-                maxBoundsViscosity={0.8}
+
                 minZoom={-1.5}
                 maxZoom={2}
-                zoomControl
+
+                dragging={false}
+                scrollWheelZoom={false}
+                doubleClickZoom={false}
+                touchZoom={false}
+                boxZoom={false}
+                keyboard={false}
+
+                zoomControl={false}
                 attributionControl={false}
             >
                 <InitialMapView />
@@ -237,13 +306,13 @@ function CampusMap({
                             return null;
                         }
 
-                        const access =
-                            hasAccess(
+                        const color =
+                            getBuildingColor(
                                 building.id
                             );
 
-                        const color =
-                            getBuildingColor(
+                        const canEdit =
+                            hasEditAccess(
                                 building.id
                             );
 
@@ -252,29 +321,39 @@ function CampusMap({
                                 key={
                                     building.id
                                 }
+
                                 center={
                                     pointToLatLng(
                                         point
                                     )
                                 }
-                                radius={
-                                    selectedBuildingId ===
-                                    building.id
-                                        ? 18
-                                        : 14
-                                }
+
+                                /*
+                                    Jeden rozmiar dla KAŻDEGO
+                                    budynku, także wybranego.
+                                */
+                                radius={17}
+
                                 pathOptions={{
                                     color,
-                                    fillColor:
-                                    color,
-                                    fillOpacity:
-                                        currentUser?.role ===
-                                        'lecturer' &&
-                                        !access
-                                            ? 0.35
-                                            : 0.85,
+
+                                    fill: true,
+                                    fillColor: color,
+
+                                    /*
+                                        Przezroczysty środek,
+                                        ale całość nadal klikalna.
+                                    */
+                                    fillOpacity: 0,
+
+                                    opacity: 1,
+
+                                    /*
+                                        Stała grubość.
+                                    */
                                     weight: 3,
                                 }}
+
                                 eventHandlers={{
                                     click: () =>
                                         handleBuildingClick(
@@ -291,11 +370,13 @@ function CampusMap({
                                     </strong>
 
                                     {currentUser?.role ===
-                                        'lecturer' &&
-                                        !access && (
+                                        'lecturer' && (
                                             <>
                                                 <br />
-                                                Brak dostępu
+
+                                                {canEdit
+                                                    ? 'Możesz zarządzać tym budynkiem'
+                                                    : 'Tylko podgląd'}
                                             </>
                                         )}
                                 </Tooltip>
@@ -310,19 +391,21 @@ function CampusMap({
                             key={
                                 entrance.id
                             }
+
                             entrance={
                                 entrance
                             }
+
                             position={
-                                pointToLatLng(
-                                    {
-                                        x:
-                                        entrance.x,
-                                        y:
-                                        entrance.y,
-                                    }
-                                )
+                                pointToLatLng({
+                                    x:
+                                    entrance.x,
+
+                                    y:
+                                    entrance.y,
+                                })
                             }
+
                             isRecommended={
                                 entrance.id ===
                                 recommendedEntranceId
@@ -330,14 +413,6 @@ function CampusMap({
                         />
                     )
                 )}
-
-                <MapResetButton
-                    onReset={() =>
-                        onBuildingSelect(
-                            null
-                        )
-                    }
-                />
             </MapContainer>
         </div>
     );
