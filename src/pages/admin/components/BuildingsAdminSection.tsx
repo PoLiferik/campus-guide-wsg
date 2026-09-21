@@ -27,12 +27,6 @@ function BuildingsAdminSection() {
         }
     }
 
-    function startCreate() {
-        setEditing(null);
-        setName('');
-        setError(null);
-    }
-
     function startEdit(building: BuildingDto) {
         setEditing(building);
         setName(building.name ?? '');
@@ -93,9 +87,7 @@ function BuildingsAdminSection() {
                     <p>Dodawanie i edycja budynków kampusu</p>
                 </div>
 
-                <button className="buildings-admin-primary" onClick={startCreate}>
-                    + Dodaj budynek
-                </button>
+
             </header>
 
             <form className="buildings-admin-form" onSubmit={handleSave}>

@@ -1,15 +1,16 @@
-import {useEffect, useState} from 'react';
-import {buildingApi} from '../../../services/buildingApi';
-import {roomApi} from '../../../services/roomApi';
-import type {BuildingDto} from '../../../types/dto/BuildingDto';
-import type {RoomDto} from '../../../types/dto/RoomDto';
+import { useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
+import { buildingApi } from '../../../services/buildingApi';
+import { roomApi } from '../../../services/roomApi';
+import type { BuildingDto } from '../../../types/dto/BuildingDto';
+import type { RoomDto } from '../../../types/dto/RoomDto';
 import './RoomsAdminSection.css';
 
 function RoomsAdminSection() {
     const [rooms, setRooms] = useState<RoomDto[]>([]);
     const [buildings, setBuildings] = useState<BuildingDto[]>([]);
     const [number, setNumber] = useState('');
-    const [buildingId, setBuildingId] = useState('');
+    const [selectedBuildingIds, setSelectedBuildingIds] = useState<number[]>([]);
     const [editing, setEditing] = useState<RoomDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -22,6 +23,7 @@ function RoomsAdminSection() {
     async function loadData() {
         try {
             setLoading(true);
+            setError(null);
 
             const [roomData, buildingData] = await Promise.all([
                 roomApi.getAll(),
@@ -38,33 +40,45 @@ function RoomsAdminSection() {
         }
     }
 
-    function startCreate() {
-        setEditing(null);
-        setNumber('');
-        setBuildingId('');
-        setError(null);
-    }
-
     function startEdit(room: RoomDto) {
         setEditing(room);
         setNumber(String(room.number ?? '').padStart(3, '0'));
-        setBuildingId(String(room.buildingId));
+        setSelectedBuildingIds(
+            (room.buildingIds ?? [])
+                .map(Number)
+                .filter(Number.isFinite)
+        );
         setError(null);
     }
 
-    async function handleSave(event: React.FormEvent) {
+    function cancelEdit() {
+        setEditing(null);
+        setNumber('');
+        setSelectedBuildingIds([]);
+        setError(null);
+    }
+
+    function toggleBuilding(buildingId: number) {
+        setSelectedBuildingIds((current) =>
+            current.includes(buildingId)
+                ? current.filter((id) => id !== buildingId)
+                : [...current, buildingId]
+        );
+    }
+
+    async function handleSave(event: FormEvent) {
         event.preventDefault();
 
         const normalizedNumber = number.trim().padStart(3, '0');
-        const selectedBuildingId = Number(buildingId);
+        const numericNumber = Number(normalizedNumber);
 
-        if (!/^\d{3}$/.test(normalizedNumber)) {
-            setError('Numer sali musi mieć 3 cyfry, np. 005, 101 lub 201.');
+        if (!/^\d{3}$/.test(normalizedNumber) || numericNumber < 1 || numericNumber > 999) {
+            setError('Numer sali musi mieć wartość od 001 do 999.');
             return;
         }
 
-        if (!selectedBuildingId) {
-            setError('Wybierz budynek.');
+        if (selectedBuildingIds.length === 0) {
+            setError('Wybierz co najmniej jeden budynek.');
             return;
         }
 
@@ -73,18 +87,27 @@ function RoomsAdminSection() {
             setError(null);
 
             if (editing?.id !== undefined) {
-                await roomApi.update(Number(editing.id), normalizedNumber, selectedBuildingId);
+                await roomApi.update(
+                    Number(editing.id),
+                    normalizedNumber,
+                    selectedBuildingIds
+                );
             } else {
-                await roomApi.create(normalizedNumber, selectedBuildingId);
+                await roomApi.create(
+                    normalizedNumber,
+                    selectedBuildingIds
+                );
             }
 
             await loadData();
-            setEditing(null);
-            setNumber('');
-            setBuildingId('');
+            cancelEdit();
         } catch (error) {
             console.error(error);
-            setError('Nie udało się zapisać sali.');
+            setError(
+                error instanceof Error
+                    ? error.message
+                    : 'Nie udało się zapisać sali.'
+            );
         } finally {
             setSaving(false);
         }
@@ -92,7 +115,12 @@ function RoomsAdminSection() {
 
     async function handleDelete(room: RoomDto) {
         if (room.id === undefined) return;
-        if (!window.confirm(`Czy usunąć salę ${String(room.number).padStart(3, '0')}?`)) return;
+
+        const roomNumber = String(room.number ?? '').padStart(3, '0');
+
+        if (!window.confirm(`Czy usunąć salę ${roomNumber}?`)) {
+            return;
+        }
 
         try {
             setError(null);
@@ -104,15 +132,26 @@ function RoomsAdminSection() {
         }
     }
 
-    function getBuildingName(id: number | string) {
-        return buildings.find((building) => Number(building.id) === Number(id))?.name ?? '?';
+    function getBuildingsText(room: RoomDto) {
+        const names = (room.buildingIds ?? [])
+            .map((buildingId) =>
+                buildings.find(
+                    (building) => Number(building.id) === Number(buildingId)
+                )?.name
+            )
+            .filter(Boolean);
+
+        return names.length > 0
+            ? names.join(', ')
+            : 'Brak';
     }
 
-    function getFloor(roomNumber: number | string) {
-        const value = Number(roomNumber);
+    function getFloor(roomNumber: number | string | undefined) {
+        const value = Number(roomNumber ?? 0);
 
         if (value >= 200) return '2 piętro';
         if (value >= 100) return '1 piętro';
+
         return 'Parter';
     }
 
@@ -124,59 +163,96 @@ function RoomsAdminSection() {
                     <h1>Sale</h1>
                     <p>Dodawanie sal i przypisywanie ich do budynków</p>
                 </div>
-
-                <button className="rooms-admin-primary" onClick={startCreate}>
-                    + Dodaj salę
-                </button>
             </header>
 
             <form className="rooms-admin-form" onSubmit={handleSave}>
-                <div>
+                <div className="rooms-admin-number">
                     <label>Numer sali</label>
                     <input
                         value={number}
                         maxLength={3}
-                        placeholder="np. 101"
-                        onChange={(event) => setNumber(event.target.value.replace(/\D/g, ''))}
+                        placeholder="np. 104"
+                        onChange={(event) =>
+                            setNumber(
+                                event.target.value.replace(/\D/g, '')
+                            )
+                        }
                     />
                 </div>
 
-                <div>
-                    <label>Budynek</label>
-                    <select value={buildingId} onChange={(event) => setBuildingId(event.target.value)}>
-                        <option value="">Wybierz budynek</option>
+                <div className="rooms-admin-buildings">
+                    <div className="rooms-admin-buildings__header">
+                        <label>Budynki</label>
+                        <span>Możesz zaznaczyć kilka</span>
+                    </div>
 
-                        {buildings.map((building) => (
-                            <option key={String(building.id)} value={String(building.id)}>
-                                Budynek {building.name}
-                            </option>
-                        ))}
-                    </select>
+                    <div className="rooms-admin-buildings__grid">
+                        {buildings.map((building) => {
+                            const id = Number(building.id);
+                            const selected = selectedBuildingIds.includes(id);
+
+                            return (
+                                <label
+                                    key={id}
+                                    className={`rooms-admin-building ${
+                                        selected
+                                            ? 'rooms-admin-building--selected'
+                                            : ''
+                                    }`}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={selected}
+                                        onChange={() => toggleBuilding(id)}
+                                    />
+
+                                    <span>
+                                        {building.name}
+                                    </span>
+                                </label>
+                            );
+                        })}
+                    </div>
                 </div>
 
-                <button type="submit" disabled={saving}>
-                    {saving ? 'Zapisywanie...' : editing ? 'Zapisz zmiany' : 'Dodaj'}
-                </button>
-
-                {editing && (
+                <div className="rooms-admin-form__actions">
                     <button
-                        type="button"
-                        className="rooms-admin-cancel"
-                        onClick={() => {
-                            setEditing(null);
-                            setNumber('');
-                            setBuildingId('');
-                        }}
+                        type="submit"
+                        disabled={saving}
                     >
-                        Anuluj
+                        {saving
+                            ? 'Zapisywanie...'
+                            : editing
+                                ? 'Zapisz zmiany'
+                                : 'Dodaj'}
                     </button>
-                )}
+
+                    {editing && (
+                        <button
+                            type="button"
+                            className="rooms-admin-cancel"
+                            onClick={cancelEdit}
+                        >
+                            Anuluj
+                        </button>
+                    )}
+                </div>
             </form>
 
-            {error && <div className="rooms-admin-error">{error}</div>}
+            {error && (
+                <div className="rooms-admin-error">
+                    {error}
+                </div>
+            )}
 
             {loading ? (
-                <div className="rooms-admin-card">Ładowanie...</div>
+                <div className="rooms-admin-card">
+                    Ładowanie...
+                </div>
+            ) : rooms.length === 0 ? (
+                <div className="rooms-admin-card">
+                    Brak sal w bazie danych.
+                </div>
             ) : (
                 <div className="rooms-admin-table-wrapper">
                     <table className="rooms-admin-table">
@@ -184,7 +260,7 @@ function RoomsAdminSection() {
                         <tr>
                             <th>ID</th>
                             <th>Sala</th>
-                            <th>Budynek</th>
+                            <th>Budynki</th>
                             <th>Piętro</th>
                             <th>Akcje</th>
                         </tr>
@@ -194,15 +270,36 @@ function RoomsAdminSection() {
                         {rooms.map((room) => (
                             <tr key={String(room.id)}>
                                 <td>{room.id}</td>
-                                <td><strong>{String(room.number).padStart(3, '0')}</strong></td>
-                                <td>Budynek {getBuildingName(room.buildingId)}</td>
-                                <td>{getFloor(room.number ?? 0)}</td>
+
+                                <td>
+                                    <strong>
+                                        {String(room.number ?? '').padStart(3, '0')}
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    {getBuildingsText(room)}
+                                </td>
+
+                                <td>
+                                    {getFloor(room.number)}
+                                </td>
+
                                 <td>
                                     <div className="rooms-admin-actions">
-                                        <button onClick={() => startEdit(room)}>Edytuj</button>
                                         <button
+                                            type="button"
+                                            onClick={() => startEdit(room)}
+                                        >
+                                            Edytuj
+                                        </button>
+
+                                        <button
+                                            type="button"
                                             className="rooms-admin-delete"
-                                            onClick={() => void handleDelete(room)}
+                                            onClick={() =>
+                                                void handleDelete(room)
+                                            }
                                         >
                                             Usuń
                                         </button>

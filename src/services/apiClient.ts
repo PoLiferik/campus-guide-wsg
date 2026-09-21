@@ -10,14 +10,17 @@ export class ApiError extends Error {
     }
 }
 
-async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
+export async function apiRequest<T>(
+    endpoint: string,
+    options: RequestInit = {}
+): Promise<T> {
     const headers = new Headers(options.headers);
 
     if (options.body && !headers.has('Content-Type')) {
         headers.set('Content-Type', 'application/json');
     }
 
-    const response = await fetch(url, {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
         headers,
         credentials: 'include',
@@ -55,12 +58,4 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
     }
 
     return JSON.parse(text) as T;
-}
-
-export function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    return request<T>(`${API_BASE_URL}${endpoint}`, options);
-}
-
-export function backendRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    return request<T>(endpoint, options);
 }

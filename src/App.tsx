@@ -8,6 +8,7 @@ import LoginPage from './pages/login/LoginPage';
 import LecturerPage from './pages/lecturer/LecturerPage';
 import AdminPage from './pages/admin/AdminPage';
 import AccountMenu from './components/AccountMenu/AccountMenu';
+import AdminRoute from './components/AdminRoute';
 import './App.css';
 
 function App() {
@@ -39,7 +40,9 @@ function App() {
                 <Route
                     path="/admin"
                     element={
-                        <AdminPage/>
+                        <AdminRoute>
+                            <AdminPage />
+                        </AdminRoute>
                     }
                 />
 

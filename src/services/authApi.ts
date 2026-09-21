@@ -24,8 +24,10 @@ function readSession(): User | null {
 
 export const authApi = {
     async login(username: string, password: string): Promise<User> {
+        const normalizedUsername = username.trim();
+
         const payload: LoginDto = {
-            username: username.trim(),
+            username: normalizedUsername,
             password,
         };
 
@@ -34,18 +36,23 @@ export const authApi = {
             body: JSON.stringify(payload),
         });
 
-        const user = await userApi.getByUsername(username.trim());
+        const user = await userApi.getByUsername(normalizedUsername);
 
         saveSession(user);
+
         return user;
     },
 
     async getCurrentUser(): Promise<User | null> {
         const session = readSession();
+
         if (!session) return null;
+
         try {
             const user = await userApi.getByUsername(session.email);
+
             saveSession(user);
+
             return user;
         } catch {
             return session;
@@ -53,6 +60,12 @@ export const authApi = {
     },
 
     async logout(): Promise<void> {
-        localStorage.removeItem(SESSION_KEY);
+        try {
+            await apiRequest<void>('/Moderators/logout', {
+                method: 'POST',
+            });
+        } finally {
+            localStorage.removeItem(SESSION_KEY);
+        }
     },
 };

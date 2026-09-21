@@ -1,30 +1,30 @@
-.rooms-admin-header {
+.entrances-admin-header {
     margin-bottom: 22px;
 }
 
-.rooms-admin-header span {
+.entrances-admin-header span {
     color: #9ca3af;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
 }
 
-.rooms-admin-header h1 {
+.entrances-admin-header h1 {
     margin: 4px 0;
     color: #111827;
     font-size: 28px;
 }
 
-.rooms-admin-header p {
+.entrances-admin-header p {
     margin: 0;
     color: #6b7280;
 }
 
-.rooms-admin-form {
+.entrances-admin-form {
     display: grid;
-    grid-template-columns: 180px 1fr auto;
+    grid-template-columns: 180px 180px 160px auto;
     align-items: end;
-    gap: 14px;
+    gap: 10px;
     padding: 16px;
     margin-bottom: 18px;
     border: 1px solid #e5e7eb;
@@ -32,77 +32,35 @@
     background: white;
 }
 
-.rooms-admin-number {
+.entrances-admin-form > div:not(.entrances-admin-form__actions) {
     display: flex;
     flex-direction: column;
     gap: 5px;
 }
 
-.rooms-admin-form label {
+.entrances-admin-form label {
     color: #374151;
     font-size: 11px;
     font-weight: 700;
 }
 
-.rooms-admin-number input {
+.entrances-admin-form input,
+.entrances-admin-form select {
     width: 100%;
     padding: 10px;
     box-sizing: border-box;
     border: 1px solid #d1d5db;
     border-radius: 8px;
-    font-size: 12px;
-}
-
-.rooms-admin-buildings {
-    min-width: 0;
-}
-
-.rooms-admin-buildings__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 6px;
-}
-
-.rooms-admin-buildings__header span {
-    color: #9ca3af;
-    font-size: 9px;
-}
-
-.rooms-admin-buildings__grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
-.rooms-admin-building {
-    min-width: 42px;
-    padding: 9px 12px;
-    box-sizing: border-box;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
     background: white;
-    color: #374151;
-    text-align: center;
-    cursor: pointer;
+    color: #111827;
 }
 
-.rooms-admin-building input {
-    display: none;
-}
-
-.rooms-admin-building--selected {
-    border-color: #2563eb;
-    background: #eff6ff;
-    color: #1d4ed8;
-}
-
-.rooms-admin-form__actions {
+.entrances-admin-form__actions {
     display: flex;
     gap: 7px;
 }
 
-.rooms-admin-form__actions button {
+.entrances-admin-form__actions button {
     padding: 10px 16px;
     border: 0;
     border-radius: 8px;
@@ -113,53 +71,67 @@
     cursor: pointer;
 }
 
-.rooms-admin-form__actions .rooms-admin-cancel {
+.entrances-admin-form__actions .entrances-admin-cancel {
     background: #e5e7eb;
     color: #374151;
 }
 
-.rooms-admin-form__actions button:disabled {
-    opacity: 0.55;
-    cursor: default;
-}
-
-.rooms-admin-table-wrapper {
+.entrances-admin-table-wrapper {
     overflow-x: auto;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
     background: white;
 }
 
-.rooms-admin-table {
+.entrances-admin-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-.rooms-admin-table th,
-.rooms-admin-table td {
+.entrances-admin-table th,
+.entrances-admin-table td {
     padding: 13px 14px;
     border-bottom: 1px solid #f3f4f6;
     text-align: left;
     font-size: 12px;
 }
 
-.rooms-admin-table th {
+.entrances-admin-table th {
     background: #f9fafb;
     color: #6b7280;
     font-size: 10px;
     text-transform: uppercase;
 }
 
-.rooms-admin-table tr:last-child td {
+.entrances-admin-table tr:last-child td {
     border-bottom: 0;
 }
 
-.rooms-admin-actions {
+.entrances-admin-status {
+    padding: 5px 9px;
+    border: 0;
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.entrances-admin-status--open {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.entrances-admin-status--closed {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.entrances-admin-actions {
     display: flex;
     gap: 6px;
 }
 
-.rooms-admin-actions button {
+.entrances-admin-actions button {
     padding: 6px 10px;
     border: 1px solid #d1d5db;
     border-radius: 7px;
@@ -170,12 +142,12 @@
     cursor: pointer;
 }
 
-.rooms-admin-actions .rooms-admin-delete {
+.entrances-admin-actions .entrances-admin-delete {
     border-color: #fecaca;
     color: #dc2626;
 }
 
-.rooms-admin-error {
+.entrances-admin-error {
     padding: 10px;
     margin-bottom: 15px;
     border: 1px solid #fecaca;
@@ -185,7 +157,7 @@
     font-size: 11px;
 }
 
-.rooms-admin-card {
+.entrances-admin-card {
     padding: 20px;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
@@ -194,7 +166,7 @@
 }
 
 @media (max-width: 900px) {
-    .rooms-admin-form {
+    .entrances-admin-form {
         grid-template-columns: 1fr;
     }
 }

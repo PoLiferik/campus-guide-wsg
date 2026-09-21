@@ -1,10 +1,6 @@
-import type {Entrance} from '../types/Entrance';
+import type { Entrance } from '../types/Entrance';
 
 export const entrances: Entrance[] = [
-    // =========================
-    // BUDYNEK B
-    // =========================
-
     {
         id: 1,
         buildingId: 2,
@@ -12,14 +8,15 @@ export const entrances: Entrance[] = [
         x: 0.6152,
         y: 0.5307,
         direction: 'right',
-        description: 'Wejście zachodnie',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
-        isOpen: true,
-        openFrom: '07:00',
-        openUntil: '21:00',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
-
     {
         id: 2,
         buildingId: 2,
@@ -27,14 +24,15 @@ export const entrances: Entrance[] = [
         x: 0.6685,
         y: 0.5201,
         direction: 'left',
-        description: 'Wejście wschodnie 1',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
-        isOpen: true,
-        openFrom: '08:00',
-        openUntil: '18:00',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
-
     {
         id: 3,
         buildingId: 2,
@@ -42,18 +40,15 @@ export const entrances: Entrance[] = [
         x: 0.6685,
         y: 0.5488,
         direction: 'left',
-        description: 'Wejście wschodnie 2',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
-        isOpen: false,
-        openFrom: '07:00',
-        openUntil: '21:00',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
-
-    // =========================
-    // BUDYNEK A
-    // =========================
-
     {
         id: 4,
         buildingId: 1,
@@ -61,14 +56,15 @@ export const entrances: Entrance[] = [
         x: 0.8299,
         y: 0.5482,
         direction: 'right',
-        description: 'Wejście lewe',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
-        isOpen: true,
-        openFrom: '06:30',
-        openUntil: '22:00',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
-
     {
         id: 5,
         buildingId: 1,
@@ -76,33 +72,15 @@ export const entrances: Entrance[] = [
         x: 0.8459,
         y: 0.5273,
         direction: 'down',
-        description: 'Wejście górne',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
-        isOpen: false,
-        openFrom: '08:00',
-        openUntil: '16:00',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
-
-    {
-        id: 9,
-        buildingId: 1,
-        code: 'A-3',
-        x: 0.8182,
-        y: 0.5628,
-        direction: 'down',
-        description: 'Wejście boczne',
-        accessibility: 'unknown',
-        verificationStatus: 'unverified',
-        isOpen: true,
-        openFrom: '08:00',
-        openUntil: '20:00',
-    },
-
-    // =========================
-    // BUDYNEK G
-    // =========================
-
     {
         id: 6,
         buildingId: 6,
@@ -110,14 +88,15 @@ export const entrances: Entrance[] = [
         x: 0.5395,
         y: 0.7446,
         direction: 'left',
-        description: 'Wejście górne',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
-        isOpen: true,
-        openFrom: '07:00',
-        openUntil: '20:00',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
-
     {
         id: 7,
         buildingId: 6,
@@ -125,18 +104,15 @@ export const entrances: Entrance[] = [
         x: 0.5401,
         y: 0.7653,
         direction: 'left',
-        description: 'Wejście dolne',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
-        isOpen: false,
-        openFrom: '07:00',
-        openUntil: '17:00',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
-
-    // =========================
-    // BUDYNEK H
-    // =========================
-
     {
         id: 8,
         buildingId: 7,
@@ -144,14 +120,31 @@ export const entrances: Entrance[] = [
         x: 0.5611,
         y: 0.6892,
         direction: 'right',
-        description: 'Wejście górne',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
-        isOpen: true,
-        openFrom: '07:00',
-        openUntil: '20:00',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
-
+    {
+        id: 9,
+        buildingId: 1,
+        code: 'A-3',
+        x: 0.8182,
+        y: 0.5628,
+        direction: 'down',
+        description: null,
+        accessibility: 'unknown',
+        verificationStatus: 'unverified',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
+    },
     {
         id: 10,
         buildingId: 7,
@@ -159,18 +152,15 @@ export const entrances: Entrance[] = [
         x: 0.5614,
         y: 0.7306,
         direction: 'right',
-        description: 'Wejście dolne',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
         isOpen: null,
         openFrom: null,
         openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
-
-    // =========================
-    // BUDYNEK C
-    // =========================
-
     {
         id: 11,
         buildingId: 3,
@@ -178,14 +168,15 @@ export const entrances: Entrance[] = [
         x: 0.5485,
         y: 0.5200,
         direction: 'down',
-        description: 'Wejście górne',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
-        isOpen: true,
-        openFrom: '07:00',
-        openUntil: '20:00',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
-
     {
         id: 12,
         buildingId: 3,
@@ -193,14 +184,15 @@ export const entrances: Entrance[] = [
         x: 0.5974,
         y: 0.5511,
         direction: 'left',
-        description: 'Wejście boczne',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
-        isOpen: true,
-        openFrom: '07:00',
-        openUntil: '20:00',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
-
     {
         id: 13,
         buildingId: 3,
@@ -208,18 +200,15 @@ export const entrances: Entrance[] = [
         x: 0.5493,
         y: 0.5971,
         direction: 'up',
-        description: 'Wejście dolne',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
-        isOpen: true,
-        openFrom: '07:00',
-        openUntil: '20:00',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
-
-    // =========================
-    // BUDYNEK D
-    // =========================
-
     {
         id: 14,
         buildingId: 4,
@@ -227,18 +216,15 @@ export const entrances: Entrance[] = [
         x: 0.6766,
         y: 0.4650,
         direction: 'right',
-        description: 'Wejście główne',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
-        isOpen: true,
-        openFrom: '07:00',
-        openUntil: '20:00',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
-
-    // =========================
-    // BUDYNEK E
-    // =========================
-
     {
         id: 15,
         buildingId: 5,
@@ -246,18 +232,15 @@ export const entrances: Entrance[] = [
         x: 0.3864,
         y: 0.3795,
         direction: 'left',
-        description: 'Wejście główne',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
-        isOpen: true,
-        openFrom: '07:00',
-        openUntil: '20:00',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
-
-    // =========================
-    // BUDYNEK M
-    // =========================
-
     {
         id: 16,
         buildingId: 10,
@@ -265,14 +248,15 @@ export const entrances: Entrance[] = [
         x: 0.4207,
         y: 0.5294,
         direction: 'left',
-        description: 'Wejście boczne',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
-        isOpen: true,
-        openFrom: '07:00',
-        openUntil: '20:00',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
-
     {
         id: 17,
         buildingId: 10,
@@ -280,18 +264,15 @@ export const entrances: Entrance[] = [
         x: 0.4331,
         y: 0.5321,
         direction: 'down',
-        description: 'Wejście dolne',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
-        isOpen: true,
-        openFrom: '07:00',
-        openUntil: '20:00',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
-
-    // =========================
-    // BUDYNEK L
-    // =========================
-
     {
         id: 18,
         buildingId: 9,
@@ -299,12 +280,14 @@ export const entrances: Entrance[] = [
         x: 0.1672,
         y: 0.2310,
         direction: 'right',
-        description: 'Wejście górne',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
-        isOpen: true,
-        openFrom: '08:00',
-        openUntil: '18:00',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
     {
         id: 19,
@@ -313,11 +296,13 @@ export const entrances: Entrance[] = [
         x: 0.1678,
         y: 0.2592,
         direction: 'right',
-        description: 'Wejście dolne',
+        description: null,
         accessibility: 'unknown',
         verificationStatus: 'unverified',
-        isOpen: true,
-        openFrom: '08:00',
-        openUntil: '18:00',
+        isOpen: null,
+        openFrom: null,
+        openUntil: null,
+        updatedAt: null,
+        updatedBy: null,
     },
 ];

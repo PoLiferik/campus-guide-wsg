@@ -6,12 +6,14 @@ import type {Entrance} from '../../types/Entrance';
 import UsersAdminSection from './components/UsersAdminSection';
 import BuildingsAdminSection from './components/BuildingsAdminSection';
 import RoomsAdminSection from './components/RoomsAdminSection';
+import EntrancesAdminSection from './components/EntrancesAdminSection';
 import './AdminPage.css';
 
 type AdminSection =
     | 'dashboard'
     | 'buildings'
     | 'rooms'
+    | 'entrances'
     | 'users';
 
 function AdminPage() {
@@ -115,6 +117,17 @@ function AdminPage() {
                         }
                     >
                         Sale
+                    </button>
+
+                    <button
+                        className={
+                            section === 'entrances'
+                                ? 'admin-nav__item admin-nav__item--active'
+                                : 'admin-nav__item'
+                        }
+                        onClick={() => setSection('entrances')}
+                    >
+                        Wejścia
                     </button>
 
                     <button
@@ -244,6 +257,8 @@ function AdminPage() {
                 {section === 'buildings' && <BuildingsAdminSection/>}
 
                 {section === 'rooms' && <RoomsAdminSection/>}
+
+                {section === 'entrances' && <EntrancesAdminSection />}
 
                 {section === 'users' && (
                     <UsersAdminSection/>

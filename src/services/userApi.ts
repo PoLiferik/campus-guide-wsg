@@ -1,4 +1,4 @@
-import { apiRequest, backendRequest } from './apiClient';
+import { apiRequest } from './apiClient';
 import { buildings as mapBuildings } from '../mocks/buildings';
 import type { BuildingDto } from '../types/dto/BuildingDto';
 import type { ModeratorDto } from '../types/dto/ModeratorDto';
@@ -92,7 +92,8 @@ function backendBuildingIdsToLocal(
 
             const localBuilding = mapBuildings.find(
                 (building) =>
-                    building.code.toUpperCase() === backendBuilding.name?.trim().toUpperCase()
+                    building.code.toUpperCase() ===
+                    backendBuilding.name?.trim().toUpperCase()
             );
 
             return localBuilding?.id ?? null;
@@ -106,13 +107,16 @@ function localBuildingIdsToBackend(
 ): number[] {
     return localIds
         .map((localId) => {
-            const localBuilding = mapBuildings.find((building) => building.id === localId);
+            const localBuilding = mapBuildings.find(
+                (building) => building.id === localId
+            );
 
             if (!localBuilding) return null;
 
             const backendBuilding = backendBuildings.find(
                 (building) =>
-                    building.name?.trim().toUpperCase() === localBuilding.code.toUpperCase()
+                    building.name?.trim().toUpperCase() ===
+                    localBuilding.code.toUpperCase()
             );
 
             return toNumber(backendBuilding?.id);
@@ -151,17 +155,33 @@ function moderatorToUser(
     };
 }
 
-async function addBuilding(moderatorId: number, buildingId: number): Promise<void> {
-    await backendRequest<unknown>(
-        `/add-building?moderatorId=${moderatorId}&buildingId=${buildingId}`,
-        { method: 'POST' }
+async function addBuildings(
+    moderatorId: number,
+    buildingIds: number[]
+): Promise<void> {
+    if (buildingIds.length === 0) return;
+
+    await apiRequest<ModeratorDto>(
+        `/Moderators/add-buildings?moderatorId=${moderatorId}`,
+        {
+            method: 'POST',
+            body: JSON.stringify(buildingIds),
+        }
     );
 }
 
-async function removeBuilding(moderatorId: number, buildingId: number): Promise<void> {
-    await backendRequest<unknown>(
-        `/remove-building?moderatorId=${moderatorId}&buildingId=${buildingId}`,
-        { method: 'POST' }
+async function removeBuildings(
+    moderatorId: number,
+    buildingIds: number[]
+): Promise<void> {
+    if (buildingIds.length === 0) return;
+
+    await apiRequest<ModeratorDto>(
+        `/Moderators/remove-buildings?moderatorId=${moderatorId}`,
+        {
+            method: 'DELETE',
+            body: JSON.stringify(buildingIds),
+        }
     );
 }
 
@@ -178,13 +198,8 @@ async function syncBuildings(
         (id) => !currentBuildingIds.includes(id)
     );
 
-    for (const buildingId of toRemove) {
-        await removeBuilding(moderatorId, buildingId);
-    }
-
-    for (const buildingId of toAdd) {
-        await addBuilding(moderatorId, buildingId);
-    }
+    await removeBuildings(moderatorId, toRemove);
+    await addBuildings(moderatorId, toAdd);
 }
 
 async function getUserById(id: number): Promise<User> {
@@ -238,7 +253,7 @@ export const userApi = {
     async create(data: CreateUserInput): Promise<User> {
         const username = data.email.trim();
 
-        if (username.length < 1) {
+        if (!username) {
             throw new Error('USERNAME_REQUIRED');
         }
 
@@ -278,27 +293,25 @@ export const userApi = {
 
         const roleId = resolveRoleId(data.role, context.roles);
 
-        const moderatorPayload: ModeratorDto = {
-            id: created.id,
-            username: created.username ?? username,
-            name: created.name ?? name,
-            surname: created.surname ?? surname,
-            roleId,
-            buildingIds: created.buildingIds ?? [],
-        };
-
-        await apiRequest<unknown>(`/Moderators/${moderatorId}`, {
+        await apiRequest<ModeratorDto>(`/Moderators/${moderatorId}`, {
             method: 'PUT',
-            body: JSON.stringify(moderatorPayload),
+            body: JSON.stringify({
+                id: created.id,
+                username: created.username ?? username,
+                name: created.name ?? name,
+                surname: created.surname ?? surname,
+                roleId,
+                buildingIds: created.buildingIds ?? [],
+            }),
         });
 
         if (data.role === 'Moderator') {
-            const buildingIds = localBuildingIdsToBackend(
+            const targetBuildingIds = localBuildingIdsToBackend(
                 data.assignedBuildingIds,
                 context.backendBuildings
             );
 
-            await syncBuildings(moderatorId, [], buildingIds);
+            await addBuildings(moderatorId, targetBuildingIds);
         }
 
         return getUserById(moderatorId);
@@ -330,8 +343,8 @@ export const userApi = {
                     )
                     : currentBuildingIds;
 
-        if (targetRole === 'Admin' && currentBuildingIds.length > 0) {
-            await syncBuildings(id, currentBuildingIds, []);
+        if (targetRole === 'Admin') {
+            await removeBuildings(id, currentBuildingIds);
         }
 
         let name = current.name ?? '';
@@ -346,24 +359,25 @@ export const userApi = {
         const username = data.email?.trim() || current.username || '';
         const roleId = resolveRoleId(targetRole, context.roles);
 
-        const payload: ModeratorDto = {
-            id: current.id ?? id,
-            username,
-            name,
-            surname,
-            roleId,
-            buildingIds: targetRole === 'Admin'
-                ? []
-                : current.buildingIds ?? [],
-        };
-
-        await apiRequest<unknown>(`/Moderators/${id}`, {
+        await apiRequest<ModeratorDto>(`/Moderators/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(payload),
+            body: JSON.stringify({
+                id: current.id ?? id,
+                username,
+                name,
+                surname,
+                roleId,
+                buildingIds:
+                    targetRole === 'Admin'
+                        ? []
+                        : current.buildingIds ?? [],
+            }),
         });
 
         if (targetRole === 'Moderator') {
-            const fresh = await apiRequest<ModeratorDto>(`/Moderators/${id}`);
+            const fresh = await apiRequest<ModeratorDto>(
+                `/Moderators/${id}`
+            );
 
             const freshBuildingIds = (fresh.buildingIds ?? [])
                 .map(Number)

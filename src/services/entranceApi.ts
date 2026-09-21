@@ -1,564 +1,143 @@
-import {
-    apiRequest,
-} from './apiClient';
+import { entrances } from '../mocks/entrances';
+import type { Entrance } from '../types/Entrance';
 
-import {
-    entrances as mockEntrances,
-} from '../mocks/entrances';
+const STORAGE_KEY = 'campus-guide-entrance-statuses';
 
-import {
-    buildings as mapBuildings,
-} from '../mocks/buildings';
-
-import type {
-    BuildingDto,
-} from '../types/dto/BuildingDto';
-
-import type {
-    EntranceDto,
-} from '../types/dto/EntranceDto';
-
-import type {
-    Entrance,
-} from '../types/Entrance';
+interface EntranceStoredStatus {
+    id: number;
+    isOpen: boolean | null;
+    openFrom: string | null;
+    openUntil: string | null;
+    updatedAt: string | null;
+    updatedBy: string | null;
+}
 
 export interface EntranceStatusUpdate {
-    isOpen:
-        boolean | null;
-    openFrom?:
-        string | null;
-    openUntil?:
-        string | null;
-    updatedBy?:
-        string | null;
+    isOpen: boolean | null;
+    openFrom?: string | null;
+    openUntil?: string | null;
+    updatedBy?: string | null;
 }
 
-interface EntranceExtra {
-    isOpenOverride?:
-        boolean | null;
-    openFrom:
-        string | null;
-    openUntil:
-        string | null;
-    updatedAt:
-        string | null;
-    updatedBy:
-        string | null;
-}
+function getStoredStatuses(): EntranceStoredStatus[] {
+    const saved = localStorage.getItem(STORAGE_KEY);
 
-const EXTRA_STORAGE_KEY =
-    'campus-guide-entrance-extra';
-
-function toNumber(
-    value:
-        number |
-        string |
-        undefined
-): number | null {
-    if (
-        value === undefined ||
-        value === null
-    ) {
-        return null;
-    }
-
-    const result =
-        Number(value);
-
-    return Number.isFinite(result)
-        ? result
-        : null;
-}
-
-function readExtras():
-    Record<
-        string,
-        EntranceExtra
-    > {
-    const saved =
-        localStorage.getItem(
-            EXTRA_STORAGE_KEY
-        );
-
-    if (!saved) {
-        return {};
-    }
+    if (!saved) return [];
 
     try {
-        return JSON.parse(
-            saved
-        );
+        return JSON.parse(saved) as EntranceStoredStatus[];
     } catch {
-        return {};
+        localStorage.removeItem(STORAGE_KEY);
+        return [];
     }
 }
 
-function saveExtras(
-    extras:
-    Record<
-        string,
-        EntranceExtra
-    >
-) {
-    localStorage.setItem(
-        EXTRA_STORAGE_KEY,
-        JSON.stringify(
-            extras
-        )
-    );
+function saveStoredStatuses(statuses: EntranceStoredStatus[]) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(statuses));
 }
 
-async function getApiBuildings():
-    Promise<BuildingDto[]> {
-    const response =
-        await apiRequest<
-            BuildingDto[] |
-            undefined
-        >(
-            '/Buildings'
-        );
+function applyStoredStatuses(): Entrance[] {
+    const statuses = getStoredStatuses();
 
-    return response ?? [];
+    return entrances.map((entrance) => {
+        const stored = statuses.find((item) => item.id === entrance.id);
+
+        if (!stored) return { ...entrance };
+
+        return {
+            ...entrance,
+            isOpen: stored.isOpen,
+            openFrom: stored.openFrom,
+            openUntil: stored.openUntil,
+            updatedAt: stored.updatedAt,
+            updatedBy: stored.updatedBy,
+        };
+    });
 }
 
-async function getApiEntrance(
-    id: number
-): Promise<EntranceDto> {
-    return apiRequest<EntranceDto>(
-        `/Entrances/${id}`
-    );
-}
+async function updateEntrance(
+    id: number,
+    update: EntranceStatusUpdate
+): Promise<Entrance> {
+    const entrance = entrances.find((item) => item.id === id);
 
-function findLocalBuilding(
-    apiBuilding:
-        BuildingDto |
-        undefined
-) {
-    const code =
-        apiBuilding?.name
-            ?.trim()
-            .toUpperCase();
-
-    if (!code) {
-        return undefined;
+    if (!entrance) {
+        throw new Error('Nie znaleziono wejścia.');
     }
 
-    return mapBuildings.find(
-        (building) =>
-            building.code
-                .trim()
-                .toUpperCase() ===
-            code
-    );
-}
+    const statuses = getStoredStatuses();
 
-function findMockEntrance(
-    apiEntrance:
-    EntranceDto,
-    localBuildingId?:
-    number
-) {
-    const apiName =
-        apiEntrance.name
-            ?.trim()
-            .toUpperCase();
-
-    if (apiName) {
-        const byCode =
-            mockEntrances.find(
-                (entrance) =>
-                    entrance.code
-                        .trim()
-                        .toUpperCase() ===
-                    apiName
-            );
-
-        if (byCode) {
-            return byCode;
-        }
-    }
-
-    const apiId =
-        toNumber(
-            apiEntrance.id
-        );
-
-    if (
-        apiId === null
-    ) {
-        return undefined;
-    }
-
-    const byId =
-        mockEntrances.find(
-            (entrance) =>
-                entrance.id ===
-                apiId
-        );
-
-    if (
-        byId &&
-        (
-            localBuildingId ===
-            undefined ||
-            byId.buildingId ===
-            localBuildingId
-        )
-    ) {
-        return byId;
-    }
-
-    return undefined;
-}
-
-function mergeEntrance(
-    apiEntrance:
-    EntranceDto,
-    apiBuildings:
-    BuildingDto[]
-): Entrance | null {
-    const apiEntranceId =
-        toNumber(
-            apiEntrance.id
-        );
-
-    const backendBuildingId =
-        toNumber(
-            apiEntrance.buildingId
-        );
-
-    if (
-        apiEntranceId ===
-        null ||
-        backendBuildingId ===
-        null
-    ) {
-        return null;
-    }
-
-    const apiBuilding =
-        apiBuildings.find(
-            (building) =>
-                toNumber(
-                    building.id
-                ) ===
-                backendBuildingId
-        );
-
-    const localBuilding =
-        findLocalBuilding(
-            apiBuilding
-        );
-
-    const mockEntrance =
-        findMockEntrance(
-            apiEntrance,
-            localBuilding?.id
-        );
-
-    if (!mockEntrance) {
-        console.warn(
-            'Brak pozycji wejścia na mapie:',
-            apiEntrance.name
-        );
-
-        return null;
-    }
-
-    const extras =
-        readExtras();
-
-    const extra =
-        extras[
-            String(
-                apiEntranceId
-            )
-            ];
-
-    const hasOverride =
-        extra !==
-        undefined &&
-        Object.prototype
-            .hasOwnProperty
-            .call(
-                extra,
-                'isOpenOverride'
-            );
-
-    return {
-        ...mockEntrance,
-
-        id:
-        apiEntranceId,
-
-        buildingId:
-            localBuilding?.id ??
-            mockEntrance
-                .buildingId,
-
-        code:
-            apiEntrance.name ??
-            mockEntrance.code,
-
-        isOpen:
-            hasOverride
-                ? extra
-                    .isOpenOverride ??
-                null
-                : apiEntrance
-                    .isOpen ??
-                null,
-
-        openFrom:
-            extra?.openFrom ??
-            null,
-
-        openUntil:
-            extra?.openUntil ??
-            null,
-
-        updatedAt:
-            extra?.updatedAt ??
-            null,
-
-        updatedBy:
-            extra?.updatedBy ??
-            null,
+    const status: EntranceStoredStatus = {
+        id,
+        isOpen: update.isOpen,
+        openFrom: update.openFrom ?? null,
+        openUntil: update.openUntil ?? null,
+        updatedAt: new Date().toISOString(),
+        updatedBy: update.updatedBy ?? null,
     };
-}
 
-function normalizeUpdate(
-    updateOrIsOpen:
-        EntranceStatusUpdate |
-        boolean |
-        null,
-    openFrom:
-        string | null,
-    openUntil:
-        string | null,
-    updatedBy:
-        string | null
-): EntranceStatusUpdate {
-    if (
-        typeof updateOrIsOpen ===
-        'object' &&
-        updateOrIsOpen !==
-        null
-    ) {
-        return updateOrIsOpen;
+    const index = statuses.findIndex((item) => item.id === id);
+
+    if (index >= 0) {
+        statuses[index] = status;
+    } else {
+        statuses.push(status);
     }
 
+    saveStoredStatuses(statuses);
+
     return {
-        isOpen:
-        updateOrIsOpen,
-
-        openFrom,
-
-        openUntil,
-
-        updatedBy,
+        ...entrance,
+        ...status,
     };
 }
 
 export const entranceApi = {
-    async getAll():
-        Promise<Entrance[]> {
-        const [
-            apiEntrances,
-            apiBuildings,
-        ] =
-            await Promise.all([
-                apiRequest<
-                    EntranceDto[] |
-                    undefined
-                >(
-                    '/Entrances'
-                ),
-
-                getApiBuildings(),
-            ]);
-
-        return (
-            apiEntrances ??
-            []
-        )
-            .map(
-                (entrance) =>
-                    mergeEntrance(
-                        entrance,
-                        apiBuildings
-                    )
-            )
-            .filter(
-                (
-                    entrance
-                ): entrance is Entrance =>
-                    entrance !== null
-            );
+    async getAll(): Promise<Entrance[]> {
+        return applyStoredStatuses();
     },
 
-    async getById(
-        id: number
-    ): Promise<
-        Entrance | null
-    > {
-        const [
-            entrance,
-            buildings,
-        ] =
-            await Promise.all([
-                getApiEntrance(
-                    id
-                ),
-
-                getApiBuildings(),
-            ]);
-
-        return mergeEntrance(
-            entrance,
-            buildings
+    async getByBuilding(buildingId: number): Promise<Entrance[]> {
+        return applyStoredStatuses().filter(
+            (entrance) => entrance.buildingId === buildingId
         );
+    },
+
+    async getById(id: number): Promise<Entrance> {
+        const entrance = applyStoredStatuses().find(
+            (item) => item.id === id
+        );
+
+        if (!entrance) {
+            throw new Error('Nie znaleziono wejścia.');
+        }
+
+        return entrance;
     },
 
     async updateStatus(
         id: number,
-        updateOrIsOpen:
-            EntranceStatusUpdate |
-            boolean |
-            null,
-        openFrom:
-            string | null =
-        null,
-        openUntil:
-            string | null =
-        null,
-        updatedBy:
-            string | null =
-        null
+        updateOrIsOpen: EntranceStatusUpdate | boolean | null,
+        openFrom?: string | null,
+        openUntil?: string | null,
+        updatedBy?: string | null
     ): Promise<Entrance> {
-        const update =
-            normalizeUpdate(
-                updateOrIsOpen,
-                openFrom,
-                openUntil,
-                updatedBy
-            );
-
-        const current =
-            await getApiEntrance(
-                id
-            );
-
-        let saved =
-            current;
-
         if (
-            update.isOpen !==
-            null
+            typeof updateOrIsOpen === 'object' &&
+            updateOrIsOpen !== null
         ) {
-            const payload:
-                EntranceDto = {
-                id:
-                current.id,
-
-                name:
-                current.name,
-
-                isOpen:
-                update.isOpen,
-
-                buildingId:
-                current.buildingId,
-            };
-
-            saved =
-                await apiRequest<EntranceDto>(
-                    `/Entrances/${id}`,
-                    {
-                        method:
-                            'PUT',
-
-                        body:
-                            JSON.stringify(
-                                payload
-                            ),
-                    }
-                );
+            return updateEntrance(id, updateOrIsOpen);
         }
 
-        const extras =
-            readExtras();
+        return updateEntrance(id, {
+            isOpen: updateOrIsOpen,
+            openFrom: openFrom ?? null,
+            openUntil: openUntil ?? null,
+            updatedBy: updatedBy ?? null,
+        });
+    },
 
-        const key =
-            String(id);
-
-        const previous =
-            extras[key] ?? {
-                openFrom:
-                    null,
-
-                openUntil:
-                    null,
-
-                updatedAt:
-                    null,
-
-                updatedBy:
-                    null,
-            };
-
-        const next:
-            EntranceExtra = {
-            ...previous,
-
-            openFrom:
-                update.openFrom ??
-                null,
-
-            openUntil:
-                update.openUntil ??
-                null,
-
-            updatedAt:
-                new Date()
-                    .toISOString(),
-
-            updatedBy:
-                update.updatedBy ??
-                null,
-        };
-
-        if (
-            update.isOpen ===
-            null
-        ) {
-            next.isOpenOverride =
-                null;
-        } else {
-            delete next
-                .isOpenOverride;
-        }
-
-        extras[key] =
-            next;
-
-        saveExtras(extras);
-
-        const buildings =
-            await getApiBuildings();
-
-        const result =
-            mergeEntrance(
-                saved,
-                buildings
-            );
-
-        if (!result) {
-            throw new Error(
-                'Nie znaleziono pozycji wejścia na mapie.'
-            );
-        }
-
-        return result;
+    async resetDemoStatuses(): Promise<void> {
+        localStorage.removeItem(STORAGE_KEY);
     },
 };
